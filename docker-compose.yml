@@ -14,8 +14,9 @@ services:
             context: .
             dockerfile: Dockerfile
         environment:
-            - ConnectionStrings__PostrgresqlConnection=User ID=postgres;Password=postgres;Server=ruga-password_manager-db-dev;Port=5432;Database=postgres_db_dev;Pooling=true;
+            - ConnectionStrings__PostrgresqlConnection=$CONNECTION_STRING;
             - ASPNETCORE_URLS=http://+:80
+            - ASPNETCORE_ENVIRONMENT=Development
         networks:
             - dev
 
@@ -23,9 +24,9 @@ services:
         image: postgres:17.2-bookworm
         container_name: ruga-password_manager-db-dev
         environment:
-            - POSTGRES_USER=postgres
-            - POSTGRES_PASSWORD=postgres
-            - POSTGRES_DB=postgres_db_dev
+            - POSTGRES_USER=$POSTGRES_USER
+            - POSTGRES_PASSWORD=$POSTGRES_PASSWORD
+            - POSTGRES_DB=$POSTGRES_DB
         ports:
             - "5433:5432"
         restart: always
