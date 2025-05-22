@@ -1,0 +1,16 @@
+# EDITOR
+.vscode
+
+# CONFIGURACION DE ENTORNO.
+.env
+
+# HERRAMIENTAS DE DESARROLLO.
+.air.toml
+
+# ARCHIVOS DE CONSTRUCCION.
+cmd/server/tmp/
+.exe
+.out
+
+# ARCHIVOS DE MacOS (AUNQUE NO TENGO UNA MAC BOOK, JA!)
+.DS_Store
