@@ -13,57 +13,68 @@ import (
 )
 
 func Login(c *gin.Context) {
-	// RECIBE LA INFORMACION DE LA PETICION, ESPERANDO UN EMAIL Y UN PASSWORD. -- DUPLICADA --
+	// BODY DE LA PETICION HTTP.
 	var body struct {
 		Email    string
 		Password string
 	}
 
+	// ===========================================================================================
+	// ===========================================================================================
+	// =========================================== VALIDACIONES ==================================
+	// OBTENCION Y VALIDACION DEL BODY.
 	if c.Bind(&body) != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Failed to read body",
+			"STATUS": "Failed to read body...",
+			"ERROR":  c.Errors,
 		})
-
+		c.Abort()
 		return
 	}
 
-	// VERFICAMOS QUE EL EMAIL EXISTA...
-	var user domain.User
-	postgres.DB.First(&user, "email	=	?", body.Email)
-
-	if user.ID == 0 {
+	// VERFICAMOS QUE EL EMAIL EXISTA.
+	var userExist domain.User
+	userExistResult := postgres.DB.First(&userExist, "email	=	?", body.Email)
+	if userExist.ID == 0 || userExistResult.Error != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid email or password.",
+			"STATUS": "Invalid email or password.",
+			"ERROR":  userExistResult.Error.Error(),
 		})
+		c.Abort()
 		return
 	}
 
 	// VERIFICAR QUE LA CONSTRASEÑA SEA LA MISMA.
-	err := bcrypt.CompareHashAndPassword([]byte(user.Passsword), []byte(body.Password))
-	if err != nil {
+	errPasswordVerification := bcrypt.CompareHashAndPassword([]byte(userExist.Passsword), []byte(body.Password))
+	if errPasswordVerification != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid email or password.",
+			"STATUS": "Invalid email or password.",
+			"ERROR":  errPasswordVerification.Error(),
 		})
+		c.Abort()
 		return
 	}
 
-	// GENERACION DE UN JWT TOKEN.
+	// ===========================================================================================
+	// ===========================================================================================
+	// =========================================== TOKEN =========================================
+	// DEFINICION DEL TOKEN.
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"sub": user.ID,
+		"sub": userExist.ID,
 		"exp": time.Now().Add(time.Minute).Unix(),
 	})
 
-	tokenString, err := token.SignedString([]byte(os.Getenv("SECRET")))
-
-	if err != nil {
+	// GENERACION DE UN JWT TOKEN.
+	tokenString, errToken := token.SignedString([]byte(os.Getenv("SECRET")))
+	if errToken != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Failed to create token.",
+			"STATUS": "Failed to create token.",
+			"ERROR":  errToken.Error(),
 		})
+		c.Abort()
 		return
 	}
 
 	// REGRESAR EL TOKEN.
-	c.JSON(http.StatusOK, gin.H{
-		"token": tokenString,
-	})
+	c.JSON(http.StatusOK, gin.H{"TOKEN": tokenString})
 }
