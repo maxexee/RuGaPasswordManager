@@ -26,7 +26,7 @@ func Login(c *gin.Context) {
 	if c.Bind(&body) != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"STATUS": "Failed to read body...",
-			"ERROR":  c.Errors,
+			"ERROR":  c.Errors.Errors(),
 		})
 		c.Abort()
 		return
@@ -76,5 +76,5 @@ func Login(c *gin.Context) {
 	}
 
 	// REGRESAR EL TOKEN.
-	c.JSON(http.StatusOK, gin.H{"TOKEN": tokenString})
+	c.JSON(http.StatusOK, gin.H{"TOKEN-CREATED": tokenString})
 }
