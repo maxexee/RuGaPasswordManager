@@ -9,25 +9,22 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	postgres "github.com/maxexee/rugaPasswordManager/infrastructure/db"
 	"github.com/maxexee/rugaPasswordManager/internal/domain"
+	validations "github.com/maxexee/rugaPasswordManager/internal/handler/validations"
 	"golang.org/x/crypto/bcrypt"
 )
 
 func Login(c *gin.Context) {
 	// BODY DE LA PETICION HTTP.
 	var body struct {
-		Email    string
-		Password string
+		Email    string `json:"email" binding:"required,email"`
+		Password string `json:"password" binding:"required,min=8"`
 	}
 
 	// ===========================================================================================
 	// ===========================================================================================
 	// =========================================== VALIDACIONES ==================================
 	// OBTENCION Y VALIDACION DEL BODY.
-	if c.Bind(&body) != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"STATUS": "Failed to read body...",
-			"ERROR":  c.Errors.Errors(),
-		})
+	if !validations.BodyValidation(c, &body) {
 		c.Abort()
 		return
 	}
@@ -35,22 +32,14 @@ func Login(c *gin.Context) {
 	// VERFICAMOS QUE EL EMAIL EXISTA.
 	var userExist domain.User
 	userExistResult := postgres.DB.First(&userExist, "email	=	?", body.Email)
-	if userExist.ID == 0 || userExistResult.Error != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"STATUS": "Invalid email or password.",
-			"ERROR":  userExistResult.Error.Error(),
-		})
+	if !validations.DataBaseValidations(c, userExistResult, userExist.ID, "Invalid email or password...") {
 		c.Abort()
 		return
 	}
 
 	// VERIFICAR QUE LA CONSTRASEÑA SEA LA MISMA.
 	errPasswordVerification := bcrypt.CompareHashAndPassword([]byte(userExist.Passsword), []byte(body.Password))
-	if errPasswordVerification != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"STATUS": "Invalid email or password.",
-			"ERROR":  errPasswordVerification.Error(),
-		})
+	if !validations.ErrorValidations(c, errPasswordVerification, "Invalid email or password...") {
 		c.Abort()
 		return
 	}
@@ -66,11 +55,7 @@ func Login(c *gin.Context) {
 
 	// GENERACION DE UN JWT TOKEN.
 	tokenString, errToken := token.SignedString([]byte(os.Getenv("SECRET")))
-	if errToken != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"STATUS": "Failed to create token.",
-			"ERROR":  errToken.Error(),
-		})
+	if !validations.ErrorValidations(c, errToken, "Failed to create token...") {
 		c.Abort()
 		return
 	}

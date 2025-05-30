@@ -2,10 +2,12 @@ package handler
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	postgres "github.com/maxexee/rugaPasswordManager/infrastructure/db"
 	"github.com/maxexee/rugaPasswordManager/internal/domain"
+	validations "github.com/maxexee/rugaPasswordManager/internal/handler/validations"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -14,18 +16,14 @@ func SignUp(c *gin.Context) {
 
 	// BODY DE LA PETICION HTTP.
 	var body struct {
-		Email    string
-		Password string
+		Email    string `json:"email" binding:"required,email"`
+		Password string `json:"password" binding:"required,min=8"`
 	}
 	// ===========================================================================================
 	// ===========================================================================================
 	// =========================================== VALIDACIONES ==================================
 	// OBTENCION Y VALIDACION DEL BODY.
-	if c.Bind(&body) != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"STATUS": "Failed to read body",
-			"ERROR":  c.Errors.Errors(),
-		})
+	if !validations.BodyValidation(c, &body) {
 		c.Abort()
 		return
 	}
@@ -34,30 +32,21 @@ func SignUp(c *gin.Context) {
 	// ===========================================================================================
 	// =========================================== CONTRASEÑA ====================================
 	// HASHEA LA CONTRASEÑA RECIBIDA.
-	hash, errHashContraseña := bcrypt.GenerateFromPassword([]byte(body.Password), 10)
-	if errHashContraseña != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"STATUS": "Failed to hash password",
-			"ERROR":  errHashContraseña.Error(),
-		})
+	passwordHash, errHashContraseña := bcrypt.GenerateFromPassword([]byte(body.Password), 10)
+	if !validations.ErrorValidations(c, errHashContraseña, "Failed to hash password...") {
 		c.Abort()
 		return
 	}
 
 	// CREAR EL USUARIO.
 	userCreation := domain.User{
-		Email:     body.Email,
-		Passsword: string(hash),
+		Email:     strings.ToLower(body.Email),
+		Passsword: string(passwordHash),
 	}
 
-	// LO GUARDA EN LA BASE DE DATOS.
+	// GUARDADO DEL USUARIO EN LA BASE DE DATOS.
 	userCreationResult := postgres.DB.Create(&userCreation)
-	// SI RETORNA UN ERROR EL GUARDAR EN LA BASE DE DATOS, NOS MUESTRA...
-	if userCreationResult.Error != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"STATUS": "Failed to create user.",
-			"ERROR":  userCreationResult.Error.Error(),
-		})
+	if !validations.DataBaseValidations(c, userCreationResult, userCreation.ID, "Failed to create user...") {
 		c.Abort()
 		return
 	}
