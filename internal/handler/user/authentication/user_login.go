@@ -16,8 +16,8 @@ import (
 func Login(c *gin.Context) {
 	// BODY DE LA PETICION HTTP.
 	var body struct {
-		Email    string `json:"email" binding:"required,email"`
-		Password string `json:"password" binding:"required,min=8"`
+		Email    string `json:"email" validate:"required,email"`
+		Password string `json:"password" validate:"required,min=8"`
 	}
 
 	// ===========================================================================================
