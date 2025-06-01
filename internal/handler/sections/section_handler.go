@@ -236,10 +236,12 @@ func SectionUpdate(c *gin.Context) {
 	}
 
 	// VERIFICAMOS QUE NO SE PUEDA ASIGNAR COMO SectionParentId A LA MISMA SECCION A EDITAR.
-	if sectionId == int(*body.SectionParentId) {
-		c.JSON(http.StatusBadRequest, gin.H{"ERROR": "Invalid Section ID..."})
-		c.Abort()
-		return
+	if body.SectionParentId != nil {
+		if sectionId == int(*body.SectionParentId) {
+			c.JSON(http.StatusBadRequest, gin.H{"ERROR": "Invalid Section ID..."})
+			c.Abort()
+			return
+		}
 	}
 
 	// VALIDAMOS QUE EXISTA LA SECCION A EDITAR.
