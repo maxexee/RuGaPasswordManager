@@ -8,8 +8,10 @@ import (
 	"github.com/gin-gonic/gin"
 	postgres "github.com/maxexee/rugaPasswordManager/infrastructure/db"
 	"github.com/maxexee/rugaPasswordManager/internal/domain"
+	validations "github.com/maxexee/rugaPasswordManager/internal/handler/validations"
 )
 
+// VERDE
 func SectionGet(c *gin.Context) {
 	// ID DEL USUARIO DESDE EL URL Y SU CONVERSION A UINT.
 	userIdStr := c.Param("id")
@@ -23,11 +25,7 @@ func SectionGet(c *gin.Context) {
 	// ===========================================================================================
 	// =========================================== VALIDACIONES ==================================
 	// VALIDAMOS QUE EL TIPO DE DATO DEL ID DEL USUARIO SEA CORRECTO (TIPO UINT).
-	if errUser != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"STATUS":     "Invalid Type of User's ID...",
-			"ERROR USER": errUser.Error(),
-		})
+	if !validations.ErrorValidations(c, errUser, "Invalid Type of User's ID...") {
 		c.Abort()
 		return
 	}
@@ -35,11 +33,7 @@ func SectionGet(c *gin.Context) {
 	// VALIDAMOS QUE EL ID DEL USUARIO EXISTA, SI NO, DEVUELVE ERROR.
 	var userExist domain.User
 	userExistResutlt := postgres.DB.First(&userExist, "id = ?", userId)
-	if userExist.ID == 0 || userExistResutlt.Error != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"STATUS": "User ID not found...",
-			"ERROR":  userExistResutlt.Error.Error(),
-		})
+	if !validations.DataBaseValidations(c, userExistResutlt, userExist.ID, "User ID not found...") {
 		c.Abort()
 		return
 	}
@@ -53,52 +47,35 @@ func SectionGet(c *gin.Context) {
 	// OBTENCIÓN DE LAS SECCIONES DESDE LA RAIZ.
 	if sectionIdStr == "null" {
 		sectionsGetAll := postgres.DB.Where("user_id = ?	AND	section_parent_id	IS NULL", userId).Find(&sections)
-		if sectionsGetAll.Error != nil {
-			c.JSON(http.StatusNotFound, gin.H{
-				"STATUS": "Not sections founded...",
-				"ERROR":  sectionsGetAll.Error.Error(),
-			})
+		if !validations.ErrorValidations(c, sectionsGetAll.Error, "Not sections founded...") {
 			c.Abort()
 			return
 		}
+
 	} else {
+		// SI NO ES NULL O UN NUMERO, LO TOMA COMO TYPO DE DATO INVALIDO.
+		if !validations.ErrorValidations(c, errSection, "Invalid Type of Section's ID...") {
+			c.Abort()
+			return
+		}
+
+		// VALIDAR SI EXISTE EL PADRE.
+		sectionExistResult := postgres.DB.First(&sections, "id	=	?", sectionId)
+		if !validations.ErrorValidations(c, sectionExistResult.Error, "Section's ID not Found...") {
+			c.Abort()
+			return
+		}
+
 		// OBTENCION DE LAS SECCIONES MEDIANTE UN PADRE.
-		if errSection != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"STATUS":        "Invalid Type of Section's ID...",
-				"ERROR SECTION": errSection.Error(),
-			})
-			c.Abort()
-			return
-		}
-
-		sectionExistResutl := postgres.DB.First(&sections, "id	=	?", sectionId)
-		if sectionExistResutl.Error != nil {
-			c.JSON(http.StatusNotFound, gin.H{
-				"STATUS": "Section's ID not Found",
-				"ERROR":  sectionExistResutl.Error.Error(),
-			})
-			c.Abort()
-			return
-		}
-
 		sectionsGetAll := postgres.DB.Where("user_id	=	?	AND	section_parent_id	=	?", userId, sectionId).Find(&sections)
-		if sectionsGetAll.Error != nil {
-			c.JSON(http.StatusNotFound, gin.H{
-				"STATUS": "Not sections founded 1...",
-				"ERROR":  sectionsGetAll.Error.Error(),
-			})
+		if !validations.ErrorValidations(c, sectionsGetAll.Error, "No sections founded ...") {
 			c.Abort()
 			return
 		}
 	}
 
 	passwordsGetAll := postgres.DB.Where("section_parent_id_password	=	?", sectionId).Find(&passwords)
-	if passwordsGetAll.Error != nil {
-		c.JSON(http.StatusNotFound, gin.H{
-			"STATUS": "Not password founded...",
-			"ERROR":  passwordsGetAll.Error.Error(),
-		})
+	if !validations.ErrorValidations(c, passwordsGetAll.Error, "Not password founded...") {
 		c.Abort()
 		return
 	}
@@ -110,6 +87,7 @@ func SectionGet(c *gin.Context) {
 	})
 }
 
+// VERDE
 func SectionGetByName(c *gin.Context) {
 	//	ID DEL USUARIO DESDE EL URL Y SU CONVERSION A UINT.
 	idStr := c.Param("id")
@@ -118,24 +96,19 @@ func SectionGetByName(c *gin.Context) {
 	// ===========================================================================================
 	// =========================================== VALIDACIONES ==================================
 	// VALIDAMOS QUE EL TIPO DE DATO DEL ID DEL USUARIO SEA EL CORRECTO (TIPO UINT).
-	if errUser != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"STATUS": "Invalid User ID...",
-			"ERROR":  errUser.Error(),
-		})
+	if !validations.ErrorValidations(c, errUser, "Invalid Type of User ID...") {
+		c.Abort()
+		return
 	}
 
 	// VALIDAMOS QUE EL ID DEL USUARIO EXISTA, SI NO, DEVUELVE ERROR.
 	var userExist domain.User
 	userCreationResult := postgres.DB.First(&userExist, "id = ?", userId)
-	if userExist.ID == 0 || userCreationResult.Error != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"STATUS": "User ID not found...",
-			"ERROR":  userCreationResult.Error.Error(),
-		})
+	if !validations.DataBaseValidations(c, userCreationResult, userExist.ID, "User ID not found...") {
 		c.Abort()
 		return
 	}
+
 	// ===========================================================================================
 	// ===========================================================================================
 	// =========================================== QUERY =========================================
@@ -143,11 +116,7 @@ func SectionGetByName(c *gin.Context) {
 	sectionName := strings.ToUpper(c.Query("nameSec"))
 	var sectionExist domain.Section
 	sectionCreationResult := postgres.DB.Where("name	=	?", sectionName).First(&sectionExist)
-	if sectionExist.ID == 0 && sectionCreationResult.Error != nil {
-		c.JSON(http.StatusNotFound, gin.H{
-			"STATUS": "Section not found",
-			"ERROR":  sectionCreationResult.Error.Error(),
-		})
+	if !validations.DataBaseValidations(c, sectionCreationResult, sectionExist.ID, "Section not found...") {
 		c.Abort()
 		return
 	}
@@ -158,31 +127,30 @@ func SectionGetByName(c *gin.Context) {
 	})
 }
 
+// VERDE
 func SectionPost(c *gin.Context) {
 	// ===========================================================================================
 	// =========================================== BODY ==========================================
 	// DEFINIMOS QUE EL BODY QUE RECIBIREMOS DE LA PETICIÓN.
 	var body struct {
-		Name            string
-		Description     string
+		Name            string `json:"name" validate:"required,min=2,max=20,matchesName=^[A-Za-z0-9 ]+$"`
+		Description     string `json:"description"`
 		SectionParentId *uint
 	}
 
 	// ===========================================================================================
 	// ===========================================================================================
 	// =========================================== VALIDACIONES ==================================
-
 	// === VALIDAMOS QUE NO HAYA ERROR EN EL BODY Y TODO SEA LEGIBLE. ===
-	if c.Bind(&body) != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to read body..."})
+	if !validations.BodyValidation(c, &body) {
+		c.Abort()
 		return
 	}
 
 	// === VALIDAMOS QUE EL TIPO DE DATO DEL ID DEL USUARIO SEA EL CORRECTO (TIPO UINT). ===
 	idStr := c.Param("id") // -- OBTENEMOS EL ID DESDE EL URL. ---
-	userId, err := strconv.Atoi(idStr)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID..."})
+	userId, errUserId := strconv.Atoi(idStr)
+	if !validations.ErrorValidations(c, errUserId, "Invalid type of ID...") {
 		c.Abort()
 		return
 	}
@@ -190,11 +158,7 @@ func SectionPost(c *gin.Context) {
 	// === VALIDAMOS QUE EL ID DEL USUARIO EXISTA, SI NO, DEVUELVE ERROR. ===
 	var userExist domain.User
 	userCreationResult := postgres.DB.First(&userExist, "id = ?", userId)
-	if userExist.ID == 0 || userCreationResult.Error != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"STATUS": "User ID not found...",
-			"ERROR":  userCreationResult.Error.Error(),
-		})
+	if !validations.DataBaseValidations(c, userCreationResult, userExist.ID, "User ID not found...") {
 		c.Abort()
 		return
 	}
@@ -203,11 +167,7 @@ func SectionPost(c *gin.Context) {
 	var parentSectionExist domain.Section
 	if body.SectionParentId != nil {
 		parentResult := postgres.DB.First(&parentSectionExist, "id = ?", body.SectionParentId)
-		if parentResult.Error != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"STATUS": "Parent section not found...",
-				"ERROR":  parentResult.Error.Error(),
-			})
+		if !validations.ErrorValidations(c, parentResult.Error, "Parent section not found...") {
 			c.Abort()
 			return
 		}
@@ -216,19 +176,12 @@ func SectionPost(c *gin.Context) {
 	// ===========================================================================================
 	// ===========================================================================================
 	// =========================================== CREACION DE LA SECCION ========================
-
 	// CREACION DE LA SECCION MEDIANTE EL MODELO *Section*.
 	section := domain.Section{Name: strings.ToUpper(body.Name), Description: &body.Description, UserID: uint(userId), SectionParentId: body.SectionParentId}
 
 	// GUARDADO DE LA NUEVA SECCION EN LA BASE DE DATOS.
 	result := postgres.DB.Create(&section)
-
-	// SI HAY ALGUN ERROR AL MOMENTO DE GUARDAR LA NUEVA SECCION EN LA BASE DE DATOS.
-	if result.Error != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"STATUS": "Failed to save section on the Database...",
-			"ERROR":  result.Error.Error(),
-		})
+	if !validations.ErrorValidations(c, result.Error, "Failed to save section on the Database...") {
 		c.Abort()
 		return
 	}
@@ -237,22 +190,27 @@ func SectionPost(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"great-section": "Section created successfully..."})
 }
 
+// VERDE
 func SectionUpdate(c *gin.Context) {
 	// BODY A RECIBIR DEL FRONT-END.
-	var body map[string]interface{}
-	// VALIDACION DEL BODY.
-	if c.Bind(&body) != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to read body..."})
-		return
+	var body struct {
+		Name            string `json:"name"        validate:"required,min=2,max=20,matchesName=^[A-Za-z0-9 ]+$"`
+		Description     string `json:"description" validate:"omitempty"`
+		SectionParentId *uint
 	}
 
 	// ===========================================================================================
 	// ===========================================================================================
 	// VALIDAMOS QUE EL TIPO DE DATO DEL ID DEL USUARIO SEA EL CORRECTO (TIPO UINT).
+	// VALIDACION DEL BODY.
+	if !validations.BodyValidation(c, &body) {
+		c.Abort()
+		return
+	}
+
 	idStr := c.Param("id") // -- OBTENEMOS EL ID DESDE EL URL. ---
-	userId, err := strconv.Atoi(idStr)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID..."})
+	userId, errUserId := strconv.Atoi(idStr)
+	if !validations.ErrorValidations(c, errUserId, "Invalid type of ID...") {
 		c.Abort()
 		return
 	}
@@ -260,11 +218,7 @@ func SectionUpdate(c *gin.Context) {
 	// VALIDAMOS QUE EL ID DEL USUARIO EXISTA, SI NO, DEVUELVE ERROR.
 	var userExist domain.User
 	userCreationResult := postgres.DB.First(&userExist, "id = ?", userId)
-	if userExist.ID == 0 || userCreationResult.Error != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"STATUS": "User ID not found...",
-			"ERROR":  userCreationResult.Error.Error(),
-		})
+	if !validations.DataBaseValidations(c, userCreationResult, userExist.ID, "User ID not found...") {
 		c.Abort()
 		return
 	}
@@ -275,51 +229,53 @@ func SectionUpdate(c *gin.Context) {
 	// OBTENCION DE EL ID DE LA SECCION A MODIFICAR.
 	var section domain.Section
 	idStrUpdate := c.Param("idU")
-	sectionId, err := strconv.Atoi(idStrUpdate)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"STATUS": "Invalid ID",
-			"ERROR":  err.Error(),
-		})
+	sectionId, errSecId := strconv.Atoi(idStrUpdate)
+	if !validations.ErrorValidations(c, errSecId, "Invalid type of Section ID...") {
+		c.Abort()
+		return
 	}
 
-	//
+	// VERIFICAMOS QUE NO SE PUEDA ASIGNAR COMO SectionParentId A LA MISMA SECCION A EDITAR.
+	if sectionId == int(*body.SectionParentId) {
+		c.JSON(http.StatusBadRequest, gin.H{"ERROR": "Invalid Section ID..."})
+		c.Abort()
+		return
+	}
+
+	// VALIDAMOS QUE EXISTA LA SECCION A EDITAR.
 	sectionGetById := postgres.DB.First(&section, idStrUpdate)
-	if sectionGetById.Error != nil {
-		c.JSON(http.StatusNotFound, gin.H{
-			"STATUS": "Section not found...",
-			"ERROR":  sectionGetById.Error.Error(),
-		})
+	if !validations.ErrorValidations(c, sectionGetById.Error, "Section not found...") {
 		c.Abort()
 		return
 	}
 
 	// MODIFICACION DE LA SECCION.
-	sectionUpdateResult := postgres.DB.Model(&section).Where("id	=	?", sectionId).Updates(body)
-	if sectionUpdateResult.Error != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"STATUS": "Not able to update the current section...",
-			"ERROR":  sectionUpdateResult.Error.Error(),
-		})
+	sectionUpdateResult := postgres.DB.Model(&section).Where("id	=	?", sectionId).Updates(map[string]interface{}{
+		"Name":            strings.ToUpper(body.Name),
+		"Description":     body.Description,
+		"SectionParentId": body.SectionParentId,
+	})
+	if !validations.ErrorValidations(c, sectionUpdateResult.Error, "Not able to update the current section...") {
 		c.Abort()
 		return
 	}
 
 	// RETORNO AL DEL ESTADO OK AL FRON-END.
 	c.JSON(http.StatusOK, gin.H{
-		"STATUS": "Section update has been done correct...",
+		"STATUS":  "Section update has been done correct...",
+		"SECTION": section,
 	})
 }
 
+// VERDE
 func SectionDelete(c *gin.Context) {
 	// ===========================================================================================
 	// ===========================================================================================
 	// ===========================================================================================
 	// VALIDAMOS QUE EL TIPO DE DATO DEL ID DEL USUARIO SEA EL CORRECTO (TIPO UINT).
 	idStr := c.Param("id") // -- OBTENEMOS EL ID DESDE EL URL. ---
-	userId, err := strconv.Atoi(idStr)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID..."})
+	userId, errUserId := strconv.Atoi(idStr)
+	if !validations.ErrorValidations(c, errUserId, "Invalid type of User ID...") {
 		c.Abort()
 		return
 	}
@@ -327,48 +283,33 @@ func SectionDelete(c *gin.Context) {
 	// VALIDAMOS QUE EL ID DEL USUARIO EXISTA, SI NO, DEVUELVE ERROR.
 	var userExist domain.User
 	userCreationResult := postgres.DB.First(&userExist, "id = ?", userId)
-	if userExist.ID == 0 || userCreationResult.Error != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"STATUS": "User ID not found...",
-			"ERROR":  userCreationResult.Error.Error(),
-		})
+	if !validations.DataBaseValidations(c, userCreationResult, userExist.ID, "User ID not found...") {
 		c.Abort()
 		return
 	}
+
 	// ===========================================================================================
 	// ===========================================================================================
-	// ===========================================================================================
-	//
+	// =========================================== QUERY =========================================
+	// VALIDAMOS QUE EL ID DE LA SECCION TENGA EL FORMATO CORRECTO.
 	var section domain.Section
 	sectionIdStr := c.Param("idD")
-	sectionId, errSection := strconv.Atoi(sectionIdStr)
-	if errSection != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"STATUS": "Invalid ID...",
-			"ERROR":  errSection.Error(),
-		})
+	sectionId, errSectionId := strconv.Atoi(sectionIdStr)
+	if !validations.ErrorValidations(c, errSectionId, "Invalid type of Section ID...") {
+		c.Abort()
+		return
+	}
+
+	// VALIDAMOS QUE EXISTA LA SECCION.
+	sectionExist := postgres.DB.First(&section, sectionId)
+	if !validations.ErrorValidations(c, sectionExist.Error, "Section not found...") {
 		c.Abort()
 		return
 	}
 
 	//
-	sectionGetById := postgres.DB.First(&section, sectionId)
-	if sectionGetById.Error != nil {
-		c.JSON(http.StatusNotFound, gin.H{
-			"STATUS": "Section not found...",
-			"ERROR":  sectionGetById.Error.Error(),
-		})
-		c.Abort()
-		return
-	}
-
-	//
-	sectionDeleteResutl := postgres.DB.Delete(&section, sectionId)
-	if sectionDeleteResutl.Error != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"STATUS": "Error trying to delete the Section...",
-			"ERROR":  sectionDeleteResutl.Error.Error(),
-		})
+	sectionDeleteResutl := postgres.DB.Unscoped().Delete(&section, sectionId)
+	if !validations.ErrorValidations(c, sectionDeleteResutl.Error, "Error trying to delete the Section...") {
 		c.Abort()
 		return
 	}
