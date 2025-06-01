@@ -10,6 +10,7 @@ func init() {
 	initializers.EnvLoader()
 	postgres.DbPostgresConnection()
 	initializers.DB_migratetion()
+	initializers.InitValidator()
 }
 
 func main() {
