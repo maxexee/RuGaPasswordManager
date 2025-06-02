@@ -8,23 +8,23 @@ import (
 	"github.com/gin-gonic/gin"
 	postgres "github.com/maxexee/rugaPasswordManager/infrastructure/db"
 	"github.com/maxexee/rugaPasswordManager/internal/domain"
+	validations "github.com/maxexee/rugaPasswordManager/internal/handler/validations"
 )
 
 // VERDE
 func PasswordGetByName(c *gin.Context) {
 	// ID DEL USUARIO DESDE EL URL Y SU CONVERSION A UINT.
 	idStr := c.Param("id")
-	userId, errUser := strconv.Atoi(idStr)
+	userId, errUserId := strconv.Atoi(idStr)
+
+	// OBTENCION DEL NOMBRE DE LA CONTRASEÑA.
+	passwordName := strings.ToUpper(c.Query("namePass"))
 
 	// ===========================================================================================
 	// ===========================================================================================
 	// =========================================== VALIDACIONES ==================================
 	// VALIDAMOS QUE EL TIPO DE DATO DEL ID DEL USUARIO SEA CORRECTO (TIPO UINT).
-	if errUser != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"STATUS": "Invalid User ID...",
-			"ERROR":  errUser.Error(),
-		})
+	if !validations.ErrorValidations(c, errUserId, "Invalid type of User ID...") {
 		c.Abort()
 		return
 	}
@@ -32,33 +32,25 @@ func PasswordGetByName(c *gin.Context) {
 	// VALIDAMOS QUE EL ID DEL USUARIO EXISTA, SI NO, DEVUELVE ERROR.
 	var userExist domain.User
 	userExistResutlt := postgres.DB.First(&userExist, "id	=	?", userId)
-	if userExist.ID == 0 || userExistResutlt.Error != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"STATUS": "User ID Not Found...",
-			"ERROR":  userExistResutlt.Error.Error(),
-		})
+	if !validations.DataBaseValidations(c, userExistResutlt, userExist.ID, "User ID Not Found...") {
 		c.Abort()
 		return
 	}
+
 	// ===========================================================================================
 	// ===========================================================================================
 	// =========================================== QUERY =========================================
-	// QUERY PARA ENCONTRAR SECCIONES POR NOMBRE
-	passwordName := strings.ToUpper(c.Query("namePass"))
-	var sectionExist domain.Password
-	passwordExistResutlt := postgres.DB.Where("name	=	?", passwordName).First(&sectionExist)
-	if sectionExist.ID == 0 || passwordExistResutlt.Error != nil {
-		c.JSON(http.StatusNotFound, gin.H{
-			"STATUS": "Password not found...",
-			"ERROR":  passwordExistResutlt.Error.Error(),
-		})
+	// QUERY PARA ENCONTRAR CONTRASEÑAS POR NOMBRE
+	var passwordExist domain.Password
+	passwordExistResutlt := postgres.DB.Where("name	=	?", passwordName).First(&passwordExist)
+	if !validations.DataBaseValidations(c, passwordExistResutlt, passwordExist.ID, "Password not found...") {
 		c.Abort()
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"STATUS":   "Password is here...",
-		"PASSWORD": sectionExist,
+		"PASSWORD": passwordExist,
 	})
 }
 
@@ -66,25 +58,25 @@ func PasswordGetByName(c *gin.Context) {
 func PasswordPost(c *gin.Context) {
 	// BODY.
 	var body struct {
-		Name                    string
-		Description             string
-		Password                string
-		SectionParentIdPassword *uint
+		Name                    string  `json:"name" validate:"required,min=2,max=20,matchesName=^[A-Za-z0-9 ]+$"`
+		Description             *string `json:"description" validate:"omitempty,max=50"`
+		Password                string  `json:"password" validate:"required,min=12"`
+		SectionParentIdPassword uint    `json:"sectionparentidpassword" validate:"required,number"`
 	}
+
+	idStr_user := c.Param("id") // -- OBTENEMOS EL ID DESDE EL URL. ---
+	userId, errUserId := strconv.Atoi(idStr_user)
 
 	// ===========================================================================================
 	// ===========================================================================================
 	// =========================================== VALIDACIONES ==================================
-	// VALIDACION DEL BODY PARA LA CREACION DE LA CONSTRASEÑA.
-	if c.Bind(&body) != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to read body..."})
+	if !validations.BodyValidation(c, &body) {
+		c.Abort()
+		return
 	}
 
 	// VALIDAMOS QUE EL TIPO DE DATO DEL ID DEL USUARIO SEA EL CORRECTO (TIPO UINT).
-	idStr_user := c.Param("id") // -- OBTENEMOS EL ID DESDE EL URL. ---
-	userId, err := strconv.Atoi(idStr_user)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid User ID..."})
+	if !validations.ErrorValidations(c, errUserId, "Invalid type of User ID...") {
 		c.Abort()
 		return
 	}
@@ -92,16 +84,12 @@ func PasswordPost(c *gin.Context) {
 	// VALIDAMOS QUE EL ID DEL USUARIO EXISTA, SI NO, DEVUELVE ERROR.
 	var userExist domain.User
 	userValidationResult := postgres.DB.First(&userExist, "id = ?", userId)
-	if userExist.ID == 0 || userValidationResult.Error != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"STATUS": "User ID not found...",
-			"ERROR":  userValidationResult.Error.Error(),
-		})
+	if !validations.DataBaseValidations(c, userValidationResult, userExist.ID, "User ID not found...") {
 		c.Abort()
 		return
 	}
 
-	// VALIDAMOS QUE LA SECCION PADRE EXISTA -- VERIFICAR AUN --
+	// VALIDAMOS QUE LA SECCION PADRE EXISTA (NO SE ACEPTAN CONSTRASEÑAS EN LA SECCION RAIZ (O NULL)).
 	var sectionExist domain.Section
 	sectionValidationResult := postgres.DB.Where("id	=	?", body.SectionParentIdPassword).Select("id").First(&sectionExist)
 	if sectionExist.ID == 0 || sectionValidationResult.Error != nil {
@@ -113,21 +101,17 @@ func PasswordPost(c *gin.Context) {
 	// ===========================================================================================
 	// ===========================================================================================
 	// =========================================== QUERY =========================================
-	//
+	//CREACION DE LA NUEVA CONTRASEÑA.
 	passwordNew := domain.Password{
 		Name:                    strings.ToUpper(body.Name),
-		Description:             &body.Description,
+		Description:             body.Description,
 		Password:                body.Password,
 		SectionParentIdPassword: body.SectionParentIdPassword,
 	}
 
+	// GUARDADO DE LA CONSTRASEÑA NUEVA.
 	passwordCreation := postgres.DB.Create(&passwordNew)
-
-	if passwordCreation.Error != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"STATUS": "Failed to save password on the database...",
-			"ERROR":  passwordCreation.Error.Error(),
-		})
+	if !validations.ErrorValidations(c, passwordCreation.Error, "Failed to save password on the database...") {
 		c.Abort()
 		return
 	}
@@ -135,42 +119,40 @@ func PasswordPost(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"great-password": "Password created successfully..."})
 }
 
-// VERDE
+// VERDE -- REFERENCIA CORRECTA POR AHORA --
 func PasswordUpdate(c *gin.Context) {
 	// OBTENCION DE LOS CAMPOS A ACTUALIZAR DESDE EL BODY.
-	var body map[string]interface{}
+	var body struct {
+		Name                    string  `json:"name" validate:"required,min=2,max=20,matchesName=^[A-Za-z0-9 ]+$"`
+		Description             *string `json:"description" validate:"omitempty,max=50"`
+		Password                string  `json:"password" validate:"required,min=12"`
+		SectionParentIdPassword uint    `json:"sectionparentidpassword" validate:"required,number"`
+	}
 
 	// OBTENCION DEL ID DEL USUARIO DESDE EL URL.
 	userIdStr := c.Param("id")
-	userId, errUser := strconv.Atoi(userIdStr)
+	userId, errUserId := strconv.Atoi(userIdStr)
 
 	// OBTENCION DEL ID DE LA CONSTRASEÑA DESDE EL URL.
 	passwordIdStr := c.Param("idU")
-	passwordId, errPass := strconv.Atoi(passwordIdStr)
+	passwordId, errPassId := strconv.Atoi(passwordIdStr)
 	// ===========================================================================================
 	// ===========================================================================================
 	// =========================================== VALIDACIONES ==================================
 	// VALIDACION DE LOS DATOS DE BODY.
-	if c.Bind(&body) != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"STATUS": "Failed to read body"})
-	}
-
-	// VALIDAMOS QUE EL TIPO DE DATO DEL ID DEL USUARIO SEA CORRECTO (TIPO UINT).
-	if errUser != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"STATUS": "Invalid User ID...",
-			"ERROR":  errUser.Error(),
-		})
+	if !validations.BodyValidation(c, &body) {
 		c.Abort()
 		return
 	}
 
-	// VALIDAMOS QUE EL ID DE LA CONSTRASEÑA SEA CORRECTO
-	if errPass != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"STATUS": "Invalid Password ID...",
-			"ERROR":  errPass.Error(),
-		})
+	// VALIDAMOS QUE EL TIPO DE DATO DEL ID DEL USUARIO SEA CORRECTO (TIPO UINT).
+	if !validations.ErrorValidations(c, errUserId, "Invalid type of User ID...") {
+		c.Abort()
+		return
+	}
+
+	// VALIDAMOS QUE EL ID DE LA CONSTRASEÑA TENGA EL FORMATO CORRECTO.
+	if !validations.ErrorValidations(c, errPassId, "Invalid type of Password ID...") {
 		c.Abort()
 		return
 	}
@@ -178,11 +160,7 @@ func PasswordUpdate(c *gin.Context) {
 	// VALIDAMOS QUE EL ID DEL USUARIO EXISTA, SI NO, DEVUELVE ERROR.
 	var userExist domain.User
 	userExistResult := postgres.DB.First(&userExist, "id	=	?", userId)
-	if userExist.ID == 0 || userExistResult.Error != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"STATUS": "User ID Not Found...",
-			"ERROR":  userExistResult.Error.Error(),
-		})
+	if !validations.DataBaseValidations(c, userExistResult, userExist.ID, "User ID Not Found...") {
 		c.Abort()
 		return
 	}
@@ -192,12 +170,13 @@ func PasswordUpdate(c *gin.Context) {
 	// =========================================== QUERY =========================================
 	//
 	var passwordExist domain.Password
-	passwordUpdateResult := postgres.DB.Model(&passwordExist).Where("id	=	?", passwordId).Updates(body)
-	if passwordUpdateResult.Error != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"STATUS": "Not able to update the current password",
-			"ERROR":  passwordUpdateResult.Error.Error(),
-		})
+	passwordUpdateResult := postgres.DB.Model(&passwordExist).Where("id	=	?", passwordId).Updates(map[string]interface{}{
+		"Name":                    strings.ToUpper(body.Name),
+		"Description":             &body.Description,
+		"Password":                body.Password,
+		"SectionParentIdPassword": body.SectionParentIdPassword,
+	})
+	if !validations.ErrorValidations(c, passwordUpdateResult.Error, "Not able to update the current password") {
 		c.Abort()
 		return
 	}
@@ -213,38 +192,32 @@ func PasswordUpdate(c *gin.Context) {
 
 // VERDE
 func PasswordDelete(c *gin.Context) {
+	// OBTENCION DEL ID DEL USUARIO DESDE EL URL.
 	userIdStr := c.Param("id")
-	userId, errUser := strconv.Atoi(userIdStr)
+	userId, errUserId := strconv.Atoi(userIdStr)
 
+	// OBTENCION DEL ID DE LA CONTRASEÑA DESDE EL URL.
 	passwordIdStr := c.Param("idD")
-	passwordId, errPass := strconv.Atoi(passwordIdStr)
+	passwordId, errPassId := strconv.Atoi(passwordIdStr)
 	// ===========================================================================================
 	// ===========================================================================================
 	// =========================================== VALIDACIONES ==================================
 	// VALIDAMOS QUE EL TIPO DE DATO DEL ID DEL USUARIO SEA CORRECTO (TIPO UINT).
-	if errUser != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"STATUS": "Invalid User ID...",
-			"ERROR":  errUser.Error(),
-		})
+	if !validations.ErrorValidations(c, errUserId, "Invalid type of User ID...") {
+		c.Abort()
+		return
+	}
+
+	// VALIDAMOS QUE EL ID DE LA CONTRASEÑA TENGA EL FORMATO CORRECTO (TIPO UINT).
+	if !validations.ErrorValidations(c, errPassId, "Invalid type of Password ID...") {
+		c.Abort()
+		return
 	}
 
 	// VALIDAMOS QUE EL ID DEL USUARIO EXISTA, SI NO, DEVUELVE ERROR.
 	var userExist domain.User
 	userExistResult := postgres.DB.First(&userExist, "id	=	?", userId)
-	if userExist.ID == 0 || userExistResult.Error != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"STATUS": "User ID Not Found...",
-			"ERROR":  userExistResult.Error.Error(),
-		})
-	}
-
-	// VALIDAMOS QUE EL ID DE LA CONTRASEÑA TENGA EL FORMATO CORRECTO (TIPO UINT).
-	if errPass != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"STATUS": "Invalid ID...",
-			"ERROR":  errPass.Error(),
-		})
+	if !validations.DataBaseValidations(c, userExistResult, userExist.ID, "User ID Not Found...") {
 		c.Abort()
 		return
 	}
@@ -252,18 +225,16 @@ func PasswordDelete(c *gin.Context) {
 	// ===========================================================================================
 	// ===========================================================================================
 	// =========================================== QUERY =========================================
-	//
+	// ELIMINACION DE LA CONTRASEÑA.
 	var passwordExist domain.Password
-	passwordDeleteResult := postgres.DB.Delete(&passwordExist, passwordId)
-	if passwordDeleteResult.Error != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"STATUS": "Error trying to delete the password...",
-			"ERROR":  passwordDeleteResult.Error.Error(),
-		})
+	passwordDeleteResult := postgres.DB.Unscoped().Delete(&passwordExist, passwordId)
+	// SI HAY UN ERROR...
+	if !validations.ErrorValidations(c, passwordDeleteResult.Error, "Error trying to delete the password...") {
 		c.Abort()
 		return
 	}
 
+	// SI NO HAY ERROR, PERO NO NO HAY REGISTROS ELIMINADOS, ENTONCES NO SE ENCONTRO LA CONTRASEÑA.
 	if passwordDeleteResult.RowsAffected == 0 {
 		c.JSON(http.StatusNotFound, gin.H{
 			"STATUS": "Password not found...",
