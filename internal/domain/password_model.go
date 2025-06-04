@@ -7,5 +7,5 @@ type Password struct {
 	Name                    string `gorm:"unique;not null"`
 	Description             *string
 	Password                string `gorm:"not null"`
-	SectionParentIdPassword uint
+	SectionParentIdPassword uint   `gorm:"not null"`
 }
