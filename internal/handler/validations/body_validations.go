@@ -52,7 +52,9 @@ func BodyValidation(c *gin.Context, body any) bool {
 			var msg string
 			switch tagName {
 			case "matchesName":
-				msg = "Solo se permiten letras, números y espacios..."
+				msg = "En el nombre solo se permiten letras, números y espacios..."
+			case "passwordsFormat":
+				msg = "La constraseña debe ser MAS segura..."
 			case "required":
 				msg = "Este campo es obligatorio..."
 			case "min":
@@ -60,7 +62,7 @@ func BodyValidation(c *gin.Context, body any) bool {
 			case "max":
 				msg = "El tamaño maximo no se cumple..."
 			case "email":
-				msg = "El email no cumple con el formato correcto..."
+				msg = "El Email no cumple con el formato correcto..."
 			default:
 				msg = "Error en validación: `" + tagName + "`"
 			}
