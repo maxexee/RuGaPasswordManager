@@ -27,14 +27,17 @@ func SignUp(c *gin.Context) {
 	// ===========================================================================================
 	// ===========================================================================================
 	// =========================================== CONTRASEÑA ====================================
-	ok, userCreationResult := authenticationusecase.SignUpUseCase(body)
+	// LLAMADA AL USER CASE DE SIGN UP, DONDE LE MANDAMOS EL BODY.
+	ok, userCreationResult := authenticationusecase.SignUpUseCase(&body)
 	if !ok {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"STATUS": "Error al crear el Usuario...",
 			"ERROR":  userCreationResult.Error(),
 		})
+		c.Abort()
+		return
 	}
 
-	// RETORNA UN 200
+	// SI TODO SALE BIEN, RETORNA UN 200
 	c.JSON(http.StatusOK, gin.H{"USER-CREATED": "User created successfully..."})
 }
