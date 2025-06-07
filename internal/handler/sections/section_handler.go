@@ -9,85 +9,38 @@ import (
 	postgres "github.com/maxexee/rugaPasswordManager/infrastructure/db"
 	"github.com/maxexee/rugaPasswordManager/internal/domain"
 	validations "github.com/maxexee/rugaPasswordManager/internal/handler/validations"
+	sectionsusecase "github.com/maxexee/rugaPasswordManager/internal/use_case/sections_use_case"
 )
 
-// VERDE
 func SectionGet(c *gin.Context) {
 	// ID DEL USUARIO DESDE EL URL Y SU CONVERSION A UINT.
 	userIdStr := c.Param("id")
-	userId, errUser := strconv.Atoi(userIdStr)
 
 	// ID DE LA SECCION DESDE EL URL Y SU CONVERSION A UINT.
 	sectionIdStr := strings.ToLower(c.Query("section_parent_id"))
-	sectionId, errSection := strconv.Atoi(sectionIdStr)
-
-	// ===========================================================================================
-	// ===========================================================================================
-	// =========================================== VALIDACIONES ==================================
-	// VALIDAMOS QUE EL TIPO DE DATO DEL ID DEL USUARIO SEA CORRECTO (TIPO UINT).
-	if !validations.ErrorValidations(c, errUser, "Invalid Type of User's ID...") {
-		c.Abort()
-		return
-	}
-
-	// VALIDAMOS QUE EL ID DEL USUARIO EXISTA, SI NO, DEVUELVE ERROR.
-	var userExist domain.User
-	userExistResutlt := postgres.DB.First(&userExist, "id = ?", userId)
-	if !validations.DataBaseValidations(c, userExistResutlt, userExist.ID, "User ID not found...") {
-		c.Abort()
-		return
-	}
 
 	// ===========================================================================================
 	// ===========================================================================================
 	// =========================================== QUERY =========================================
-	var sections []domain.Section
-	var passwords []domain.Password
-
-	// OBTENCIÓN DE LAS SECCIONES DESDE LA RAIZ.
-	if sectionIdStr == "null" {
-		sectionsGetAll := postgres.DB.Where("user_id = ?	AND	section_parent_id	IS NULL", userId).Find(&sections)
-		if !validations.ErrorValidations(c, sectionsGetAll.Error, "Not sections founded...") {
-			c.Abort()
-			return
-		}
-
-	} else {
-		// SI NO ES NULL O UN NUMERO, LO TOMA COMO TYPO DE DATO INVALIDO.
-		if !validations.ErrorValidations(c, errSection, "Invalid Type of Section's ID...") {
-			c.Abort()
-			return
-		}
-
-		// VALIDAR SI EXISTE EL PADRE.
-		sectionExistResult := postgres.DB.First(&sections, "id	=	?", sectionId)
-		if !validations.ErrorValidations(c, sectionExistResult.Error, "Section's ID not Found...") {
-			c.Abort()
-			return
-		}
-
-		// OBTENCION DE LAS SECCIONES MEDIANTE UN PADRE.
-		sectionsGetAll := postgres.DB.Where("user_id	=	?	AND	section_parent_id	=	?", userId, sectionId).Find(&sections)
-		if !validations.ErrorValidations(c, sectionsGetAll.Error, "No sections founded ...") {
-			c.Abort()
-			return
-		}
-	}
-
-	passwordsGetAll := postgres.DB.Where("section_parent_id_password	=	?", sectionId).Find(&passwords)
-	if !validations.ErrorValidations(c, passwordsGetAll.Error, "Not password founded...") {
+	// LLAMADA AL CASO DE USO PARA OBTENER TODAS LAS SECCIONES, YA SEA LA RAIZ (NULL) O LAS SECCIONES HIJAS DE UNA SECCION
+	// PADRE.
+	ok, sectionsReturn, sectionReturnError := sectionsusecase.SectionGetAllUseCase(userIdStr, sectionIdStr)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"STATUS": "ERROR ...",
+			"ERROR":  sectionReturnError.Error(),
+		})
 		c.Abort()
 		return
 	}
 
+	//
 	c.JSON(http.StatusOK, gin.H{
-		"STATUS":    "All sections...",
-		"SECTIONS":  sections,
-		"PASSWORDS": passwords,
+		"STATUS":   "All sections...",
+		"SECTIONS": sectionsReturn,
 	})
 }
 
-// VERDE
 func SectionGetByName(c *gin.Context) {
 	//	ID DEL USUARIO DESDE EL URL Y SU CONVERSION A UINT.
 	idStr := c.Param("id")
@@ -127,7 +80,6 @@ func SectionGetByName(c *gin.Context) {
 	})
 }
 
-// VERDE
 func SectionPost(c *gin.Context) {
 	// ===========================================================================================
 	// =========================================== BODY ==========================================
@@ -190,7 +142,6 @@ func SectionPost(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"great-section": "Section created successfully..."})
 }
 
-// VERDE
 func SectionUpdate(c *gin.Context) {
 	// BODY A RECIBIR DEL FRONT-END.
 	var body struct {
@@ -269,7 +220,6 @@ func SectionUpdate(c *gin.Context) {
 	})
 }
 
-// VERDE
 func SectionDelete(c *gin.Context) {
 	// ===========================================================================================
 	// ===========================================================================================
