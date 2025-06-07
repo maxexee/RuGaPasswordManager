@@ -12,7 +12,7 @@ import (
 )
 
 func RequireAuth(c *gin.Context) {
-	fmt.Println("=== I am middleware ===")
+	fmt.Println("=== I am middleware Requiering Authorization ===")
 
 	authHeader := c.GetHeader("Authorization")
 	if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer") {
@@ -36,7 +36,7 @@ func RequireAuth(c *gin.Context) {
 		return
 	}
 
-	// Validar expiración (si usas claims estándar)
+	// VALIDAR EXPIRACION (SI SE USAN CLAIMS ESTANDAR).
 	if claims, ok := token.Claims.(jwt.MapClaims); ok {
 		if exp, ok := claims["exp"].(float64); ok {
 			if time.Unix(int64(exp), 0).Before(time.Now()) {
@@ -45,7 +45,8 @@ func RequireAuth(c *gin.Context) {
 				return
 			}
 		}
-		// Convertir el "sub" a int (probablemente era float64)
+
+		// CONVERTIR EL "sub" A INT (POSIBLEMENTE ERA floeat64).
 		if sub, ok := claims["sub"].(float64); ok {
 			c.Set("user_id", int(sub))
 		} else {
