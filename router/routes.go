@@ -24,9 +24,10 @@ func InitRoutes() *gin.Engine {
 
 	// RUTAS DE LAS CONTRASEÑAS (ASEGURARLAS DESPUES AL "SecureRoutesMiddleware").
 	router.POST("/user/:id/section/passwd", passwords.PasswordPost)
+	router.GET("/user/:id/passwd/byId/:idPG", passwords.PasswordGetById)
 	router.GET("/user/:id/passwd/byNamePass", passwords.PasswordGetByName)
-	router.PATCH("/user/:id/passwd/updatePass/:idU", passwords.PasswordUpdate)
-	router.DELETE("/user/:id/passwd/delPass/:idD", passwords.PasswordDelete)
+	router.PATCH("/user/:id/passwd/updatePass/:idPU", passwords.PasswordUpdate)
+	router.DELETE("/user/:id/passwd/delPass/:idPD", passwords.PasswordDelete)
 
 	// RUTAS ASEGURADAS.
 	middleware.SecureRoutesMiddleware(router)
