@@ -22,31 +22,40 @@ type LogInDTO struct {
 // ===========================================================================================
 // ===========================================================================================
 // =========================================== DTOs - CONTRASEÑA =============================
+// DTO PARA UNA CONTRASEÑA, TODOS LOS CAMPOS PERO PARA RECIBIR.
+type PasswordBodyDto struct {
+	Name                    string  `json:"name" validate:"required,min=2,max=20,matchesName=^[A-Za-z0-9 ]+$"`
+	Description             *string `json:"description,omitempty" validate:"max=50"`
+	Password                string  `json:"password" validate:"required,min=12"`
+	SectionParentIdPassword uint    `json:"sectionparentidpassword" validate:"number,required"`
+}
+
 // DTO PARA UNA CONTRASEÑA, TODOS LOS CAMPOS.
-type Password struct {
-	ID                      uint
-	CreatedAt               time.Time
-	UpdatedAt               time.Time
-	Name                    string
-	Description             *string
-	Password                string
-	SectionParentIdPassword uint
+type PasswordDto struct {
+	ID                      uint      `json:"id,omitempty"`
+	CreatedAt               time.Time `json:"createdAt,omitempty"`
+	UpdatedAt               time.Time `json:"updatedAt,omitempty"`
+	Name                    string    `json:"name"`
+	Description             *string   `json:"description,omitempty"`
+	Password                string    `json:"password"`
+	SectionParentIdPassword uint      `json:"sectionParentIdPassword"`
+	UserID                  uint      `json:"userId,omitempty"`
 }
 
 // ===========================================================================================
 // ===========================================================================================
-// =========================================== DTOs - SECCIONES===============================
+// =========================================== DTOs - SECCIONES ===============================
 // DTO PARA UNA SECCION, TODOS LOS CAMPOS.
 type SectionDto struct {
 	// UpdatedAt        time.Time    `json:"updatedAt,omitempty"`
-	ID               uint         `json:"id,omitempty"`
-	CreatedAt        time.Time    `json:"createdAt,omitempty"`
-	Name             string       `json:"name"`
-	Description      *string      `json:"description,omitempty"`
-	UserID           uint         `json:"userId,omitempty"`
-	SectionParentId  *uint        `json:"sectionParentId"`
-	SectionChildren  []SectionDto `json:"children,omitempty"`
-	PasswordChildren []Password   `json:"passwords,omitempty"`
+	ID               uint          `json:"id,omitempty"`
+	CreatedAt        time.Time     `json:"createdAt,omitempty"`
+	Name             string        `json:"name"`
+	Description      *string       `json:"description,omitempty"`
+	UserID           uint          `json:"userId,omitempty"`
+	SectionParentId  *uint         `json:"sectionParentId"`
+	SectionChildren  []SectionDto  `json:"children,omitempty"`
+	PasswordChildren []PasswordDto `json:"passwords,omitempty"`
 }
 
 // -- NU - PENDIENTE --
