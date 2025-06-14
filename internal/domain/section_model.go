@@ -8,6 +8,6 @@ type Section struct {
 	Description      *string
 	UserID           uint `gorm:"not null"`
 	SectionParentId  *uint
-	SectionChildren  []Section  `gorm:"foreignKey:SectionParentId"`
-	PasswordChildren []Password `gorm:"foreignKey:SectionParentIdPassword"`
+	SectionChildren  []Section  `gorm:"foreignKey:SectionParentId;constraint:OnDelete:CASCADE"`
+	PasswordChildren []Password `gorm:"foreignKey:SectionParentIdPassword;constraint:OnDelete:CASCADE"`
 }
