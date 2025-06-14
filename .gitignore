@@ -11,6 +11,7 @@
 cmd/server/tmp/
 .exe
 .out
+main
 
 # ARCHIVOS DE MacOS (AUNQUE NO TENGO UNA MAC BOOK, JA!)
 .DS_Store
