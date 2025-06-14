@@ -10,7 +10,7 @@ import (
 	sectionsusecase "github.com/maxexee/rugaPasswordManager/internal/use_case/sections_use_case"
 )
 
-// VERDE
+// VERDE..
 func SectionGet(c *gin.Context) {
 	// ID DEL USUARIO DESDE EL URL.
 	userIdStr := c.Param("id")
@@ -40,7 +40,7 @@ func SectionGet(c *gin.Context) {
 	})
 }
 
-// VERDE
+// VERDE..
 func SectionGetByName(c *gin.Context) {
 	// OBTENCION DEL ID EL USUARIO.
 	userIdStr := c.Param("id")
@@ -66,7 +66,7 @@ func SectionGetByName(c *gin.Context) {
 	})
 }
 
-// VERDE
+// VERDE..
 func SectionPost(c *gin.Context) {
 	// ===========================================================================================
 	// =========================================== BODY ==========================================
@@ -103,7 +103,7 @@ func SectionPost(c *gin.Context) {
 	})
 }
 
-// VERDE
+// VERDE..
 func SectionUpdate(c *gin.Context) {
 	// OBTENCION DEL ID EL USUARIO.
 	userIdStr := c.Param("id")

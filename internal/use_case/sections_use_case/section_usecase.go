@@ -9,7 +9,7 @@ import (
 	sectionsrepository "github.com/maxexee/rugaPasswordManager/internal/repository/sections_repository"
 )
 
-// VERDE
+// VERDE..
 func SectionGetAllUseCase(userIdStr string, sectionIdStr string) (bool, *dto.SectionGetSliceDTO, error) {
 	// OBJETO DEL TIPO *dto.SectionDto*
 	var section dto.SectionDto
@@ -55,7 +55,7 @@ func SectionGetAllUseCase(userIdStr string, sectionIdStr string) (bool, *dto.Sec
 	return true, sectionsReturn, nil
 }
 
-// VERDE
+// VERDE..
 func SectionGetByNameUseCase(userIdStr string, sectionName string) (bool, *dto.SectionDto, error) {
 	// OBJETO DEL TIPO *dto.SectionDto*
 	var section dto.SectionDto
@@ -86,7 +86,7 @@ func SectionGetByNameUseCase(userIdStr string, sectionName string) (bool, *dto.S
 	return true, sectionReturn, nil
 }
 
-// VERDE
+// VERDE..
 func SectionPostUseCase(userIdStr string, section *dto.SectionDto) (bool, *dto.SectionDto, error) {
 	// CONVERSION DE ID DEL USUARIO, DE TIPO STRING A INT.
 	userId, userIdError := strconv.Atoi(userIdStr)
@@ -114,7 +114,7 @@ func SectionPostUseCase(userIdStr string, section *dto.SectionDto) (bool, *dto.S
 	return true, sectionCreated, nil
 }
 
-// VERDE
+// VERDE..
 func SectionUpdateUseCase(userIdStr string, sectionIdStr string, section *dto.SectionDto) (bool, *dto.SectionDto, error) {
 	// CONVERSION DE ID DEL USUARIO, DE TIPO STRING A INT.
 	userId, userIdError := strconv.Atoi(userIdStr)

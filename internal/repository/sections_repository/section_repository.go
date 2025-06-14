@@ -8,13 +8,17 @@ import (
 	"github.com/maxexee/rugaPasswordManager/internal/dto"
 )
 
-// VERDE
+// VERDE..
 func SectionGetAllRepository(section *dto.SectionDto) (bool, *dto.SectionGetSliceDTO, error) {
 	// OBJETO DE TIPO *domain.User*
 	var userExist domain.User
 
 	// OBJETO DE TIPO *[]domain.Section*
 	var sectionsExist []domain.Section
+
+	//
+	var passwordExist []domain.Password
+
 	// ===========================================================================================
 	// ===========================================================================================
 	// =========================================== VALIDACIONES ==================================
@@ -45,35 +49,53 @@ func SectionGetAllRepository(section *dto.SectionDto) (bool, *dto.SectionGetSlic
 		if sectionsGetAllResult.Error != nil {
 			return false, nil, sectionExistResult.Error
 		}
+
+		posswordGetResult := postgres.DB.Where("user_id	=	?	AND section_parent_id_password	=	?", section.UserID, section.SectionParentId).Find(&passwordExist)
+		if posswordGetResult.Error != nil {
+			return false, nil, posswordGetResult.Error
+		}
 	}
 
 	// CONSTRUCCION DEL DTO PARA EL REGRESO DE LAS SECCIONES.
-	dtos := make([]dto.SectionDto, len(sectionsExist))
+	sectionsDTOsReturn := make([]dto.SectionDto, len(sectionsExist))
 
 	for i, section := range sectionsExist {
-		dtos[i] = dto.SectionDto{
+		sectionsDTOsReturn[i] = dto.SectionDto{
 			SectionParentId: section.SectionParentId,
 			UserID:          section.UserID,
 			ID:              section.ID,
 			CreatedAt:       section.CreatedAt,
 			Name:            section.Name,
 			Description:     section.Description,
-			// UpdatedAt:       section.UpdatedAt,
-			// SectionChildren: mapChildren(s.SectionChildren),
-			// PasswordChildren: mapPasswords(s.PasswordChildren),
+		}
+	}
+
+	// CONTRUCCION DEL DTO PARA EL REGRESO DE LAS CONTRASEÑAS.
+	passwordsDTOsReturn := make([]dto.PasswordDto, len(passwordExist))
+	for i, password := range passwordExist {
+		passwordsDTOsReturn[i] = dto.PasswordDto{
+			ID:                      password.ID,
+			Name:                    password.Name,
+			Description:             password.Description,
+			Password:                password.Password,
+			UserID:                  password.UserID,
+			SectionParentIdPassword: password.SectionParentIdPassword,
+			CreatedAt:               password.CreatedAt,
+			UpdatedAt:               password.UpdatedAt,
 		}
 	}
 
 	// CONSTRUCION DEL DTO A RETORNAR.
 	dtoReturn := dto.SectionGetSliceDTO{
-		SectionSliceReturn: dtos,
+		SectionSliceReturn:  sectionsDTOsReturn,
+		PasswordSliceReturn: passwordsDTOsReturn,
 	}
 
 	// SI TODO SALE BIEN...
 	return true, &dtoReturn, nil
 }
 
-// VERDE
+// VERDE..
 func SectionGetByNameRepository(section *dto.SectionDto, sectionNameQuery string) (bool, *dto.SectionDto, error) {
 	// OBJETO DE TIPO *domain.User*
 	var userExist domain.User
@@ -113,7 +135,7 @@ func SectionGetByNameRepository(section *dto.SectionDto, sectionNameQuery string
 	return true, &dtoReturn, nil
 }
 
-// VERDE
+// VERDE..
 func SectionPostRepository(section *dto.SectionDto) (bool, *dto.SectionDto, error) {
 	// ===========================================================================================
 	// ===========================================================================================
@@ -169,7 +191,7 @@ func SectionPostRepository(section *dto.SectionDto) (bool, *dto.SectionDto, erro
 	return true, &dtoReturn, nil
 }
 
-// VERDE
+// VERDE..
 func SectionUpdateRepository(section *dto.SectionDto) (bool, *dto.SectionDto, error) {
 	// OBJETO DE USUARIO.
 	var userExist domain.User
