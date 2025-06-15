@@ -22,23 +22,15 @@ type LogInDTO struct {
 // ===========================================================================================
 // ===========================================================================================
 // =========================================== DTOs - CONTRASEÑA =============================
-// DTO PARA UNA CONTRASEÑA, TODOS LOS CAMPOS PERO PARA RECIBIR. -- VALIDAR SI ES NECESARIO --
-type PasswordBodyDto struct {
-	Name                    string  `json:"name" validate:"required,min=2,max=20,matchesName=^[A-Za-z0-9 ]+$"`
-	Description             *string `json:"description,omitempty" validate:"max=50"`
-	Password                string  `json:"password" validate:"required,min=12"`
-	SectionParentIdPassword uint    `json:"sectionparentidpassword" validate:"number,required"`
-}
-
 // DTO PARA UNA CONTRASEÑA, TODOS LOS CAMPOS.
 type PasswordDto struct {
 	ID                      uint      `json:"id,omitempty"`
 	CreatedAt               time.Time `json:"createdAt,omitempty"`
 	UpdatedAt               time.Time `json:"updatedAt,omitempty"`
-	Name                    string    `json:"name"`
-	Description             *string   `json:"description,omitempty"`
-	Password                string    `json:"password"`
-	SectionParentIdPassword uint      `json:"sectionParentIdPassword"`
+	Name                    string    `json:"name" validate:"required,min=2,max=20,matchesName=^[A-Za-z0-9 ]+$"`
+	Description             *string   `json:"description,omitempty" validate:"max=50"`
+	Password                string    `json:"password" validate:"required,min=12"`
+	SectionParentIdPassword uint      `json:"sectionparentidpassword" validate:"number,required"`
 	UserID                  uint      `json:"userId,omitempty"`
 }
 

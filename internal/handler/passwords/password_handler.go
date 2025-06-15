@@ -11,7 +11,7 @@ import (
 )
 
 // VARIBLE DE INICIALIZACION DEL *PasswordBodyDto*.
-var PasswordBodyDto dto.PasswordBodyDto
+var PasswordBodyDto dto.PasswordDto
 
 // VERDE...
 func PasswordGetById(c *gin.Context) {
@@ -76,16 +76,8 @@ func PasswordPost(c *gin.Context) {
 		return
 	}
 
-	// CONTRUCCION DEL DTO BODY.
-	dtoSend := dto.PasswordBodyDto{
-		Name:                    PasswordBodyDto.Name,
-		Description:             PasswordBodyDto.Description,
-		Password:                PasswordBodyDto.Password,
-		SectionParentIdPassword: PasswordBodyDto.SectionParentIdPassword,
-	}
-
 	// LLAMADO AL USE CASE.
-	ok, passwordReturn, passwordReturnError := passwordusecase.PasswordPostUseCase(userIdStr, &dtoSend)
+	ok, passwordReturn, passwordReturnError := passwordusecase.PasswordPostUseCase(userIdStr, &PasswordBodyDto)
 	if !ok {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"STATUS": "ERROR...",
@@ -116,16 +108,8 @@ func PasswordUpdate(c *gin.Context) {
 		return
 	}
 
-	// CONTRUCCION DEL DTO BODY.
-	dtoSend := dto.PasswordBodyDto{
-		Name:                    PasswordBodyDto.Name,
-		Description:             PasswordBodyDto.Description,
-		Password:                PasswordBodyDto.Password,
-		SectionParentIdPassword: PasswordBodyDto.SectionParentIdPassword,
-	}
-
 	// LLAMADO AL USE CASE.
-	ok, passwordReturn, passwordReturnError := passwordusecase.PasswordUpdateUseCase(userIdStr, passwordIdStr, &dtoSend)
+	ok, passwordReturn, passwordReturnError := passwordusecase.PasswordUpdateUseCase(userIdStr, passwordIdStr, &PasswordBodyDto)
 	if !ok {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"STATUS": "ERROR...",

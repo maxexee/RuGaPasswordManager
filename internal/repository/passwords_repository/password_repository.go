@@ -122,7 +122,7 @@ func PasswordPostRepository(password *dto.PasswordDto) (bool, *dto.PasswordDto, 
 	passwordCreate := domain.Password{
 		UserID:                  password.UserID,
 		SectionParentIdPassword: password.SectionParentIdPassword,
-		Name:                    strings.ToUpper(password.Name),
+		Name:                    password.Name,
 		Description:             password.Description,
 		Password:                password.Password,
 	}

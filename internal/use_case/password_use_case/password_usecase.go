@@ -2,6 +2,7 @@ package passwordusecase
 
 import (
 	"strconv"
+	"strings"
 
 	"github.com/maxexee/rugaPasswordManager/internal/dto"
 	passwordsrepository "github.com/maxexee/rugaPasswordManager/internal/repository/passwords_repository"
@@ -77,7 +78,7 @@ func PasswordGetByNameUseCase(userIdStr string, passwordNameStr string) (bool, *
 }
 
 // VERDE...
-func PasswordPostUseCase(userIdStr string, password *dto.PasswordBodyDto) (bool, *dto.PasswordDto, error) {
+func PasswordPostUseCase(userIdStr string, password *dto.PasswordDto) (bool, *dto.PasswordDto, error) {
 	// CONVERSION DEL *userIdStr* A INT.
 	userId, userIdError := strconv.Atoi(userIdStr)
 
@@ -94,7 +95,7 @@ func PasswordPostUseCase(userIdStr string, password *dto.PasswordBodyDto) (bool,
 	// CREACION DEL DTO DE ENVIO CON EL ID DEL USUARIO Y DE LA CONTRASEÑA.
 	dtoSend := dto.PasswordDto{
 		UserID:                  uint(userId),
-		Name:                    password.Name,
+		Name:                    strings.ToUpper(strings.ReplaceAll(password.Name, " ", "-")),
 		Description:             password.Description,
 		Password:                password.Password,
 		SectionParentIdPassword: password.SectionParentIdPassword,
@@ -111,7 +112,7 @@ func PasswordPostUseCase(userIdStr string, password *dto.PasswordBodyDto) (bool,
 }
 
 // VERDE...
-func PasswordUpdateUseCase(userIdStr string, passwordIdStr string, password *dto.PasswordBodyDto) (bool, *dto.PasswordDto, error) {
+func PasswordUpdateUseCase(userIdStr string, passwordIdStr string, password *dto.PasswordDto) (bool, *dto.PasswordDto, error) {
 	// CONVERSION DEL *userIdStr* A INT.
 	userId, userIdError := strconv.Atoi(userIdStr)
 
