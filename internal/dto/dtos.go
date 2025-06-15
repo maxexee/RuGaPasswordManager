@@ -22,7 +22,7 @@ type LogInDTO struct {
 // ===========================================================================================
 // ===========================================================================================
 // =========================================== DTOs - CONTRASEÑA =============================
-// DTO PARA UNA CONTRASEÑA, TODOS LOS CAMPOS PERO PARA RECIBIR.
+// DTO PARA UNA CONTRASEÑA, TODOS LOS CAMPOS PERO PARA RECIBIR. -- VALIDAR SI ES NECESARIO --
 type PasswordBodyDto struct {
 	Name                    string  `json:"name" validate:"required,min=2,max=20,matchesName=^[A-Za-z0-9 ]+$"`
 	Description             *string `json:"description,omitempty" validate:"max=50"`
@@ -45,13 +45,12 @@ type PasswordDto struct {
 // ===========================================================================================
 // ===========================================================================================
 // =========================================== DTOs - SECCIONES ===============================
-// DTO PARA UNA SECCION, TODOS LOS CAMPOS A RECIBIR, ES DECIR, EL BODY.
-
 // DTO PARA UNA SECCION, TODOS LOS CAMPOS.
 type SectionDto struct {
 	// UpdatedAt        time.Time    `json:"updatedAt,omitempty"`
 	ID               uint          `json:"id,omitempty"`
 	CreatedAt        time.Time     `json:"createdAt,omitempty"`
+	UpdatedAt        time.Time     `json:"updatedAt,omitempty"`
 	Name             string        `json:"name" validate:"required,min=2,max=20,matchesName=^[A-Za-z0-9 ]+$"`
 	Description      *string       `json:"description,omitempty" validate:"max=50"`
 	UserID           uint          `json:"userId,omitempty"`
@@ -62,7 +61,7 @@ type SectionDto struct {
 
 // -- NU - PENDIENTE --
 // DTO QUE RECIBE LAS SECCIONES DEL REPOSITORY -> USECASE.
-type SectionGetSliceDTO struct {
+type SectionPasswordGetSliceDTO struct {
 	SectionSliceReturn  []SectionDto
 	PasswordSliceReturn []PasswordDto
 }
