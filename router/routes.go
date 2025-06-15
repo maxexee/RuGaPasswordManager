@@ -19,7 +19,7 @@ func InitRoutes() *gin.Engine {
 	router.POST("/user/:id/section/createSec", sections.SectionPost)
 	router.GET("/user/:id/section/allSec", sections.SectionGet)
 	router.GET("/user/:id/section/byNameSec", sections.SectionGetByName)
-	router.PATCH("/user/:id/section/updateSec/:idU", sections.SectionUpdate)
+	router.PATCH("/user/:id/section/updateSec/:idSU", sections.SectionUpdate)
 	router.DELETE("/user/:id/section/deleteSec/:idD", sections.SectionDelete)
 
 	// RUTAS DE LAS CONTRASEÑAS (ASEGURARLAS DESPUES AL "SecureRoutesMiddleware").
