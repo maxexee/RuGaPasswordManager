@@ -10,24 +10,26 @@ import (
 	sectionsusecase "github.com/maxexee/rugaPasswordManager/internal/use_case/sections_use_case"
 )
 
-// VERDE..
+var SectionBodyDto dto.SectionDto
+
+// VERDE...
 func SectionGet(c *gin.Context) {
-	// ID DEL USUARIO DESDE EL URL.
+	// OBTENCION DEL ID DEL USUARIO DESDE EL URL.
 	userIdStr := c.Param("id")
 
-	// ID DE LA SECCION DESDE EL URL.
+	// OBTENCION DEL ID DE LA SECCION DESDE EL URL.
 	sectionIdStr := strings.ToLower(c.Query("section_parent_id"))
 
 	// ===========================================================================================
 	// ===========================================================================================
 	// =========================================== QUERY =========================================
-	// LLAMADA AL CASO DE USO PARA OBTENER TODAS LAS SECCIONES, YA SEA LA RAIZ (NULL) O LAS SECCIONES HIJAS
-	// DE UNA SECCION PADRE.
-	ok, sectionsReturn, sectionReturnError := sectionsusecase.SectionGetAllUseCase(userIdStr, sectionIdStr)
+	// LLAMADA AL CASO DE USO PARA OBTENER TODAS LAS SECCIONES YA SEA LA RAIZ (NULL) O LAS SECCIONES HIJAS,
+	// Y/O LAS CONSTRASEÑAS HIJAS DE UNA SECCION PADRE.
+	ok, sectionsPasswordsReturn, sectionsPasswordsReturnError := sectionsusecase.SectionGetAllUseCase(userIdStr, sectionIdStr)
 	if !ok {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"STATUS": "ERROR ...",
-			"ERROR":  sectionReturnError.Error(),
+			"ERROR":  sectionsPasswordsReturnError.Error(),
 		})
 		c.Abort()
 		return
@@ -36,11 +38,11 @@ func SectionGet(c *gin.Context) {
 	// SI TODO SALE BIEN.
 	c.JSON(http.StatusOK, gin.H{
 		"STATUS":   "All sections...",
-		"SECTIONS": sectionsReturn,
+		"SECTIONS": sectionsPasswordsReturn,
 	})
 }
 
-// VERDE..
+// VERDE...
 func SectionGetByName(c *gin.Context) {
 	// OBTENCION DEL ID EL USUARIO.
 	userIdStr := c.Param("id")
@@ -49,7 +51,7 @@ func SectionGetByName(c *gin.Context) {
 	sectionNameStr := strings.ToUpper(c.Query("nameSec"))
 
 	// LLAMAD AL USE CASE.
-	ok, sectionsReturn, sectionReturnError := sectionsusecase.SectionGetByNameUseCase(userIdStr, sectionNameStr)
+	ok, sectionReturn, sectionReturnError := sectionsusecase.SectionGetByNameUseCase(userIdStr, sectionNameStr)
 	if !ok {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"STATUS": "ERROR...",
@@ -62,31 +64,28 @@ func SectionGetByName(c *gin.Context) {
 	// SI TODO SALE BIEN...
 	c.JSON(http.StatusOK, gin.H{
 		"STATUS":  "Section is here",
-		"SECTION": sectionsReturn,
+		"SECTION": sectionReturn,
 	})
 }
 
-// VERDE..
+// VERDE...
 func SectionPost(c *gin.Context) {
 	// ===========================================================================================
 	// =========================================== BODY ==========================================
 	// OBTENCION DEL ID EL USUARIO.
 	userIdStr := c.Param("id")
 
-	// DEFINIMOS QUE EL BODY QUE RECIBIREMOS DE LA PETICIÓN.
-	var body dto.SectionDto
-
 	// ===========================================================================================
 	// ===========================================================================================
 	// =========================================== VALIDACIONES ==================================
 	// === VALIDAMOS QUE NO HAYA ERROR EN EL BODY Y TODO SEA LEGIBLE. ===
-	if !validations.BodyValidation(c, &body) {
+	if !validations.BodyValidation(c, &SectionBodyDto) {
 		c.Abort()
 		return
 	}
 
 	// LLAMADA AL USE CASE.
-	ok, sectionCreated, sectionCreatedError := sectionsusecase.SectionPostUseCase(userIdStr, &body)
+	ok, sectionCreated, sectionCreatedError := sectionsusecase.SectionPostUseCase(userIdStr, &SectionBodyDto)
 	if !ok {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"STATUS": "ERROR...",
@@ -103,25 +102,22 @@ func SectionPost(c *gin.Context) {
 	})
 }
 
-// VERDE..
+// VERDE...
 func SectionUpdate(c *gin.Context) {
-	// OBTENCION DEL ID EL USUARIO.
+	// OBTENCION DEL ID DEL USUARIO DESDE EL URL.
 	userIdStr := c.Param("id")
 
-	// OBTENCION DEL ID LA SECCION.
-	sectionIdStr := c.Param("idU")
-
-	// DEFINIMOS QUE EL BODY QUE RECIBIREMOS DE LA PETICIÓN.
-	var body dto.SectionDto
+	// OBTENCION DEL ID DE LA SECCION DESDE EL URL.
+	sectionIdStr := c.Param("idSU")
 
 	// VALIDACION DEL BODY.
-	if !validations.BodyValidation(c, &body) {
+	if !validations.BodyValidation(c, &SectionBodyDto) {
 		c.Abort()
 		return
 	}
 
 	// LLAMDA AL USE CASE.
-	ok, sectionReturn, sectionReturnError := sectionsusecase.SectionUpdateUseCase(userIdStr, sectionIdStr, &body)
+	ok, sectionReturn, sectionReturnError := sectionsusecase.SectionUpdateUseCase(userIdStr, sectionIdStr, &SectionBodyDto)
 	if !ok {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"STATUS": "ERROR...",
@@ -138,20 +134,20 @@ func SectionUpdate(c *gin.Context) {
 	})
 }
 
-// VERDE
+// VERDE...
 func SectionDelete(c *gin.Context) {
-	// OBTENCION DEL ID EL USUARIO.
+	// OBTENCION DEL ID DEL USUARIO DESDE EL URL.
 	userIdStr := c.Param("id")
 
-	// OBTENCION DEL ID DE LA SECCION.
+	// OBTENCION DEL ID DE LA SECCION DESDE EL URL.
 	sectionIdStr := c.Param("idD")
 
 	// LLAMDAO DEL USE CASE.
-	ok, sectionReturnError := sectionsusecase.SectionDeleteUseCase(userIdStr, sectionIdStr)
+	ok, sectionDeleteError := sectionsusecase.SectionDeleteUseCase(userIdStr, sectionIdStr)
 	if !ok {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"STATUS": "ERROR...",
-			"ERROR":  sectionReturnError.Error(),
+			"ERROR":  sectionDeleteError.Error(),
 		})
 		c.Abort()
 		return

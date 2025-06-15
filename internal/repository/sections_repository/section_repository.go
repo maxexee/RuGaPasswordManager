@@ -8,15 +8,15 @@ import (
 	"github.com/maxexee/rugaPasswordManager/internal/dto"
 )
 
-// VERDE..
-func SectionGetAllRepository(section *dto.SectionDto) (bool, *dto.SectionGetSliceDTO, error) {
+// VERDE...
+func SectionGetAllRepository(section *dto.SectionDto) (bool, *dto.SectionPasswordGetSliceDTO, error) {
 	// OBJETO DE TIPO *domain.User*
 	var userExist domain.User
 
 	// OBJETO DE TIPO *[]domain.Section*
 	var sectionsExist []domain.Section
 
-	//
+	// OBJETO DE *[]domain.Password*
 	var passwordExist []domain.Password
 
 	// ===========================================================================================
@@ -31,7 +31,7 @@ func SectionGetAllRepository(section *dto.SectionDto) (bool, *dto.SectionGetSlic
 	// ===========================================================================================
 	// ===========================================================================================
 	// =========================================== QUERY =========================================
-	// TRAEMOS LAS SECCIONES DE LA RAIZ O DE UNA SECCION PADRE.
+	// TRAEMOS LAS SECCIONES HIJAS DE LA RAIZ.
 	if section.SectionParentId == nil {
 		sectionsGetAllResult := postgres.DB.Where("user_id = ?	AND	section_parent_id	IS NULL", section.UserID).Find(&sectionsExist)
 		if sectionsGetAllResult.Error != nil {
@@ -44,12 +44,13 @@ func SectionGetAllRepository(section *dto.SectionDto) (bool, *dto.SectionGetSlic
 			return false, nil, sectionExistResult.Error
 		}
 
-		// OBTENCION DE LAS SECCIONES MEDIANTE UN PADRE.
+		// OBTENCION DE LAS SECCIONES HIJAS DE UNA SECCION PADRE.
 		sectionsGetAllResult := postgres.DB.Where("user_id	=	?	AND	section_parent_id	=	?", section.UserID, section.SectionParentId).Find(&sectionsExist)
 		if sectionsGetAllResult.Error != nil {
 			return false, nil, sectionExistResult.Error
 		}
 
+		// OBTENCION DE LAS CONSTRASEÑAS HIJAS DE UNA SECCION PADRE.
 		posswordGetResult := postgres.DB.Where("user_id	=	?	AND section_parent_id_password	=	?", section.UserID, section.SectionParentId).Find(&passwordExist)
 		if posswordGetResult.Error != nil {
 			return false, nil, posswordGetResult.Error
@@ -86,7 +87,7 @@ func SectionGetAllRepository(section *dto.SectionDto) (bool, *dto.SectionGetSlic
 	}
 
 	// CONSTRUCION DEL DTO A RETORNAR.
-	dtoReturn := dto.SectionGetSliceDTO{
+	dtoReturn := dto.SectionPasswordGetSliceDTO{
 		SectionSliceReturn:  sectionsDTOsReturn,
 		PasswordSliceReturn: passwordsDTOsReturn,
 	}
@@ -95,8 +96,8 @@ func SectionGetAllRepository(section *dto.SectionDto) (bool, *dto.SectionGetSlic
 	return true, &dtoReturn, nil
 }
 
-// VERDE..
-func SectionGetByNameRepository(section *dto.SectionDto, sectionNameQuery string) (bool, *dto.SectionDto, error) {
+// VERDE...
+func SectionGetByNameRepository(section *dto.SectionDto) (bool, *dto.SectionDto, error) {
 	// OBJETO DE TIPO *domain.User*
 	var userExist domain.User
 
@@ -106,7 +107,7 @@ func SectionGetByNameRepository(section *dto.SectionDto, sectionNameQuery string
 	// ===========================================================================================
 	// ===========================================================================================
 	// =========================================== VALIDACIONES ==================================
-	// VALIDAMOS QUE EL USUARIO EXISTA.
+	// VALIDAMOS QUE EL ID DEL USUARIO EXISTA.
 	userExistResult := postgres.DB.First(&userExist, "id	=	?", section.UserID)
 	if userExist.ID == 0 || userExistResult.Error != nil {
 		return false, nil, userExistResult.Error
@@ -115,8 +116,8 @@ func SectionGetByNameRepository(section *dto.SectionDto, sectionNameQuery string
 	// ===========================================================================================
 	// ===========================================================================================
 	// =========================================== QUERY =========================================
-	// TRAEMOS LA SECCION CON EL NOMBRE QUE PEDIMOS.
-	sectionGetResult := postgres.DB.Where("name	=	?", sectionNameQuery).First(&sectionExist)
+	// BUSQUEDA Y OTENCION DE LA SECCION EN LA BASE DE DATOS MEDIANTE EL NOMBRE.
+	sectionGetResult := postgres.DB.Where("name	=	?", section.Name).First(&sectionExist)
 	if sectionGetResult.Error != nil {
 		return false, nil, sectionGetResult.Error
 	}
@@ -135,18 +136,19 @@ func SectionGetByNameRepository(section *dto.SectionDto, sectionNameQuery string
 	return true, &dtoReturn, nil
 }
 
-// VERDE..
+// VERDE...
 func SectionPostRepository(section *dto.SectionDto) (bool, *dto.SectionDto, error) {
+	// OBJETO DE TIPO *domain.User*.
+	var userExist domain.User
+
+	// OBJETO DE TIPO *domain.Section*.
+	var parentSectionExist domain.Section
+
 	// ===========================================================================================
 	// ===========================================================================================
 	// =========================================== VALIDACIONES ==================================
-	// OBJETO DE USUARIO.
-	var userExist domain.User
 
-	// OBJETO DE SECCION.
-	var parentSectionExist domain.Section
-
-	// VALIDAMOS QUE EL ID DEL USUARIO EXISTA, SI NO, DEVUELVE ERROR.
+	// VALIDAMOS QUE EL ID DEL USUARIO EXISTA.
 	userExistResult := postgres.DB.First(&userExist, "id	=	?", section.UserID)
 	if userExist.ID == 0 || userExistResult.Error != nil {
 		return false, nil, userExistResult.Error
@@ -162,7 +164,7 @@ func SectionPostRepository(section *dto.SectionDto) (bool, *dto.SectionDto, erro
 
 	// ===========================================================================================
 	// ===========================================================================================
-	// ================================== QUERY -  CREACION DE LA SECCION ========================
+	// ================================== QUERY ==================================================
 	// CREACION DE LA SECCION MEDIANTE EL MODELO *Section*.
 	sectionCreate := domain.Section{
 		Name:            strings.ToUpper(section.Name),
@@ -191,7 +193,7 @@ func SectionPostRepository(section *dto.SectionDto) (bool, *dto.SectionDto, erro
 	return true, &dtoReturn, nil
 }
 
-// VERDE..
+// VERDE...
 func SectionUpdateRepository(section *dto.SectionDto) (bool, *dto.SectionDto, error) {
 	// OBJETO DE USUARIO.
 	var userExist domain.User
@@ -232,6 +234,7 @@ func SectionUpdateRepository(section *dto.SectionDto) (bool, *dto.SectionDto, er
 	dtoReturn := dto.SectionDto{
 		ID:              sectionExist.ID,
 		CreatedAt:       sectionExist.CreatedAt,
+		UpdatedAt:       sectionExist.UpdatedAt,
 		Name:            sectionExist.Name,
 		Description:     sectionExist.Description,
 		UserID:          sectionExist.UserID,
@@ -242,7 +245,7 @@ func SectionUpdateRepository(section *dto.SectionDto) (bool, *dto.SectionDto, er
 	return true, &dtoReturn, nil
 }
 
-// VERDE
+// VERDE...
 func SectionDeleteRepository(section *dto.SectionDto) (bool, error) {
 	// OBJETO DE TIPO *domain.User*
 	var userExist domain.User
