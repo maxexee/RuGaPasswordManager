@@ -10,28 +10,17 @@ import (
 )
 
 // VERDE...
-func SectionGetAllUseCase(userIdStr string, sectionIdStr string) (bool, *dto.SectionPasswordGetSliceDTO, error) {
-	// OBJETO DEL TIPO *dto.SectionDto*
-	var dtoSend dto.SectionDto
-
-	// CONVERSION DE STRING A INT PARA EL ID DEL USUARIO.
-	userId, userIdError := strconv.Atoi(userIdStr)
-
+func SectionGetAllUseCase(userId int, sectionIdStr string) (bool, *dto.SectionPasswordGetSliceDTO, error) {
 	// CONVERSION DE STRING A INT PARA EL ID DE LA SECCION.
 	sectionId, sectionIdError := strconv.Atoi(sectionIdStr)
 
 	// ===========================================================================================
 	// ===========================================================================================
-	// =========================================== VALIDACIONES ==================================
-	if userIdError != nil {
-		return false, nil, userIdError
-	}
-
-	// ===========================================================================================
-	// ===========================================================================================
 	// =========================================== QUERY =========================================
-	// SI EL TIPO DE DATO ES CORRECTO, SE ASIGNA EL VALOR AL "UserId" DEL DTO.
-	dtoSend.UserID = uint(userId)
+	// CONSTRUCCION DEL DTO DE ENVIO.
+	dtoSend := dto.SectionDto{
+		UserID: uint(userId),
+	}
 
 	// ASIGNAMOS  "SectionId", SI EL TIPO DE DATOS ES "nil" O "uint".
 	if sectionIdStr == "" || sectionIdStr == "null" {
@@ -55,17 +44,7 @@ func SectionGetAllUseCase(userIdStr string, sectionIdStr string) (bool, *dto.Sec
 }
 
 // VERDE...
-func SectionGetByNameUseCase(userIdStr string, sectionName string) (bool, *dto.SectionDto, error) {
-	// CONVERSION DEL *userIdStr* DE TIPO STRING A TIPO INT.
-	userId, userIdError := strconv.Atoi(userIdStr)
-
-	// ===========================================================================================
-	// ===========================================================================================
-	// =========================================== VALIDACIONES ==================================
-	if userIdError != nil {
-		return false, nil, userIdError
-	}
-
+func SectionGetByNameUseCase(userId int, sectionName string) (bool, *dto.SectionDto, error) {
 	// ===========================================================================================
 	// ===========================================================================================
 	// ====================================== QUERY ==============================================
@@ -85,17 +64,7 @@ func SectionGetByNameUseCase(userIdStr string, sectionName string) (bool, *dto.S
 }
 
 // VERDE...
-func SectionPostUseCase(userIdStr string, section *dto.SectionDto) (bool, *dto.SectionDto, error) {
-	// CONVERSION DE ID DEL USUARIO, DE TIPO STRING A INT.
-	userId, userIdError := strconv.Atoi(userIdStr)
-
-	// ===========================================================================================
-	// ===========================================================================================
-	// =========================================== VALIDACIONES ==================================
-	if userIdError != nil {
-		return false, nil, userIdError
-	}
-
+func SectionPostUseCase(userId int, section *dto.SectionDto) (bool, *dto.SectionDto, error) {
 	// ===========================================================================================
 	// ===========================================================================================
 	// ====================================== QUERY ==============================================
@@ -117,20 +86,13 @@ func SectionPostUseCase(userIdStr string, section *dto.SectionDto) (bool, *dto.S
 }
 
 // VERDE...
-func SectionUpdateUseCase(userIdStr string, sectionIdStr string, section *dto.SectionDto) (bool, *dto.SectionDto, error) {
-	// CONVERSION DE ID DEL USUARIO, DE TIPO STRING A INT.
-	userId, userIdError := strconv.Atoi(userIdStr)
-
+func SectionUpdateUseCase(userId int, sectionIdStr string, section *dto.SectionDto) (bool, *dto.SectionDto, error) {
 	// CONVERSION DE ID DE LA SECCION, DE TIPO STRING A INT.
 	sectionId, sectionIdError := strconv.Atoi(sectionIdStr)
 
 	// ===========================================================================================
 	// ===========================================================================================
 	// =========================================== VALIDACIONES ==================================
-	if userIdError != nil {
-		return false, nil, userIdError
-	}
-
 	if sectionIdError != nil {
 		return false, nil, sectionIdError
 	}
@@ -165,20 +127,13 @@ func SectionUpdateUseCase(userIdStr string, sectionIdStr string, section *dto.Se
 }
 
 // VERDE...
-func SectionDeleteUseCase(userIdStr string, sectionIdStr string) (bool, error) {
-	// CONVERSION DE ID DEL USUARIO, DE TIPO STRING A INT.
-	userId, userIdError := strconv.Atoi(userIdStr)
-
-	// // CONVERSION DE ID DE LA SECCION, DE TIPO STRING A INT.
+func SectionDeleteUseCase(userId int, sectionIdStr string) (bool, error) {
+	// CONVERSION DE ID DE LA SECCION, DE TIPO STRING A INT.
 	sectionId, sectionIdError := strconv.Atoi(sectionIdStr)
 
 	// ===========================================================================================
 	// ===========================================================================================
 	// =========================================== VALIDACIONES ==================================
-	if userIdError != nil {
-		return false, userIdError
-	}
-
 	if sectionIdError != nil {
 		return false, sectionIdError
 	}

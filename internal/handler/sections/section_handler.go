@@ -13,9 +13,30 @@ import (
 var SectionBodyDto dto.SectionDto
 
 // VERDE...
-func SectionGet(c *gin.Context) {
-	// OBTENCION DEL ID DEL USUARIO DESDE EL URL.
-	userIdStr := c.Param("id")
+func SectionGetAll(c *gin.Context) {
+	// OBTENCION DEL ID DEL USUARIO.
+	// SE RECUPERA EL "user_id" DEL CONTEXTO, ES DECIR, DE LOS CLAIMS DEL TOKEN DEL LOGIN.
+	userIdClaims, ok := c.Get("user_id")
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"STATUS": "Unauthorized",
+			"ERROR":  "There is no user_id on the token...",
+		})
+		c.Abort()
+		return
+	}
+
+	// SE VERIFICA QUE SEA ENTERO/INT.
+	// SI SI ES, ENTONCES SE ALMACENA EN "userId".
+	userId, ok := userIdClaims.(int)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"STATUS": "Unauthorized",
+			"ERROR":  "user_id in context is not an integer...",
+		})
+		c.Abort()
+		return
+	}
 
 	// OBTENCION DEL ID DE LA SECCION DESDE EL URL.
 	sectionIdStr := strings.ToLower(c.Query("section_parent_id"))
@@ -25,7 +46,7 @@ func SectionGet(c *gin.Context) {
 	// =========================================== QUERY =========================================
 	// LLAMADA AL CASO DE USO PARA OBTENER TODAS LAS SECCIONES YA SEA LA RAIZ (NULL) O LAS SECCIONES HIJAS,
 	// Y/O LAS CONSTRASEÑAS HIJAS DE UNA SECCION PADRE.
-	ok, sectionsPasswordsReturn, sectionsPasswordsReturnError := sectionsusecase.SectionGetAllUseCase(userIdStr, sectionIdStr)
+	ok, sectionsPasswordsReturn, sectionsPasswordsReturnError := sectionsusecase.SectionGetAllUseCase(userId, sectionIdStr)
 	if !ok {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"STATUS": "ERROR ...",
@@ -44,14 +65,35 @@ func SectionGet(c *gin.Context) {
 
 // VERDE...
 func SectionGetByName(c *gin.Context) {
-	// OBTENCION DEL ID EL USUARIO.
-	userIdStr := c.Param("id")
+	// OBTENCION DEL ID DEL USUARIO.
+	// SE RECUPERA EL "user_id" DEL CONTEXTO, ES DECIR, DE LOS CLAIMS DEL TOKEN DEL LOGIN.
+	userIdClaims, ok := c.Get("user_id")
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"STATUS": "Unauthorized",
+			"ERROR":  "There is no user_id on the token...",
+		})
+		c.Abort()
+		return
+	}
+
+	// SE VERIFICA QUE SEA ENTERO/INT.
+	// SI SI ES, ENTONCES SE ALMACENA EN "userId".
+	userId, ok := userIdClaims.(int)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"STATUS": "Unauthorized",
+			"ERROR":  "user_id in context is not an integer...",
+		})
+		c.Abort()
+		return
+	}
 
 	// OBTENCION DEL NOMBRE DE LA SECCION A BUSCAR.
 	sectionNameStr := strings.ToUpper(c.Query("nameSec"))
 
 	// LLAMAD AL USE CASE.
-	ok, sectionReturn, sectionReturnError := sectionsusecase.SectionGetByNameUseCase(userIdStr, sectionNameStr)
+	ok, sectionReturn, sectionReturnError := sectionsusecase.SectionGetByNameUseCase(userId, sectionNameStr)
 	if !ok {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"STATUS": "ERROR...",
@@ -70,14 +112,30 @@ func SectionGetByName(c *gin.Context) {
 
 // VERDE...
 func SectionPost(c *gin.Context) {
-	// ===========================================================================================
-	// =========================================== BODY ==========================================
-	// OBTENCION DEL ID EL USUARIO.
-	userIdStr := c.Param("id")
+	// OBTENCION DEL ID DEL USUARIO.
+	// SE RECUPERA EL "user_id" DEL CONTEXTO, ES DECIR, DE LOS CLAIMS DEL TOKEN DEL LOGIN.
+	userIdClaims, ok := c.Get("user_id")
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"STATUS": "Unauthorized",
+			"ERROR":  "There is no user_id on the token...",
+		})
+		c.Abort()
+		return
+	}
 
-	// ===========================================================================================
-	// ===========================================================================================
-	// =========================================== VALIDACIONES ==================================
+	// SE VERIFICA QUE SEA ENTERO/INT.
+	// SI SI ES, ENTONCES SE ALMACENA EN "userId".
+	userId, ok := userIdClaims.(int)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"STATUS": "Unauthorized",
+			"ERROR":  "user_id in context is not an integer...",
+		})
+		c.Abort()
+		return
+	}
+
 	// === VALIDAMOS QUE NO HAYA ERROR EN EL BODY Y TODO SEA LEGIBLE. ===
 	if !validations.BodyValidation(c, &SectionBodyDto) {
 		c.Abort()
@@ -85,7 +143,7 @@ func SectionPost(c *gin.Context) {
 	}
 
 	// LLAMADA AL USE CASE.
-	ok, sectionCreated, sectionCreatedError := sectionsusecase.SectionPostUseCase(userIdStr, &SectionBodyDto)
+	ok, sectionCreated, sectionCreatedError := sectionsusecase.SectionPostUseCase(userId, &SectionBodyDto)
 	if !ok {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"STATUS": "ERROR...",
@@ -104,8 +162,29 @@ func SectionPost(c *gin.Context) {
 
 // VERDE...
 func SectionUpdate(c *gin.Context) {
-	// OBTENCION DEL ID DEL USUARIO DESDE EL URL.
-	userIdStr := c.Param("id")
+	// OBTENCION DEL ID DEL USUARIO.
+	// SE RECUPERA EL "user_id" DEL CONTEXTO, ES DECIR, DE LOS CLAIMS DEL TOKEN DEL LOGIN.
+	userIdClaims, ok := c.Get("user_id")
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"STATUS": "Unauthorized",
+			"ERROR":  "There is no user_id on the token...",
+		})
+		c.Abort()
+		return
+	}
+
+	// SE VERIFICA QUE SEA ENTERO/INT.
+	// SI SI ES, ENTONCES SE ALMACENA EN "userId".
+	userId, ok := userIdClaims.(int)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"STATUS": "Unauthorized",
+			"ERROR":  "user_id in context is not an integer...",
+		})
+		c.Abort()
+		return
+	}
 
 	// OBTENCION DEL ID DE LA SECCION DESDE EL URL.
 	sectionIdStr := c.Param("idSU")
@@ -117,7 +196,7 @@ func SectionUpdate(c *gin.Context) {
 	}
 
 	// LLAMDA AL USE CASE.
-	ok, sectionReturn, sectionReturnError := sectionsusecase.SectionUpdateUseCase(userIdStr, sectionIdStr, &SectionBodyDto)
+	ok, sectionReturn, sectionReturnError := sectionsusecase.SectionUpdateUseCase(userId, sectionIdStr, &SectionBodyDto)
 	if !ok {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"STATUS": "ERROR...",
@@ -136,14 +215,34 @@ func SectionUpdate(c *gin.Context) {
 
 // VERDE...
 func SectionDelete(c *gin.Context) {
-	// OBTENCION DEL ID DEL USUARIO DESDE EL URL.
-	userIdStr := c.Param("id")
+	// OBTENCION DEL ID DEL USUARIO.
+	// SE RECUPERA EL "user_id" DEL CONTEXTO, ES DECIR, DE LOS CLAIMS DEL TOKEN DEL LOGIN.
+	userIdClaims, ok := c.Get("user_id")
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"STATUS": "Unauthorized",
+			"ERROR":  "There is no user_id on the token...",
+		})
+		c.Abort()
+		return
+	}
 
+	// SE VERIFICA QUE SEA ENTERO/INT.
+	// SI SI ES, ENTONCES SE ALMACENA EN "userId".
+	userId, ok := userIdClaims.(int)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"STATUS": "Unauthorized",
+			"ERROR":  "user_id in context is not an integer...",
+		})
+		c.Abort()
+		return
+	}
 	// OBTENCION DEL ID DE LA SECCION DESDE EL URL.
 	sectionIdStr := c.Param("idD")
 
 	// LLAMDAO DEL USE CASE.
-	ok, sectionDeleteError := sectionsusecase.SectionDeleteUseCase(userIdStr, sectionIdStr)
+	ok, sectionDeleteError := sectionsusecase.SectionDeleteUseCase(userId, sectionIdStr)
 	if !ok {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"STATUS": "ERROR...",

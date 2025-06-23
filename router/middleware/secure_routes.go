@@ -14,13 +14,13 @@ func SecureRoutesMiddleware(e *gin.Engine) {
 	fmt.Println("=== GRUPO DE LAS RUTAS SEGURAS ===")
 
 	protected := e.Group(("/"))
-	protected.Use(authorization.RequireAuth)
+	protected.Use(authorization.UserAuthorization)
 
 	// RUTAS DE SECCIONES (ASEGURARLAS DESPUES AL "SecureRoutesMiddleware").
-	sectionGroup := protected.Group("/user/:id/section")
+	sectionGroup := protected.Group("/section")
 	{
 		sectionGroup.POST("/createSec", sections.SectionPost)
-		sectionGroup.GET("/allSec", sections.SectionGet)
+		sectionGroup.GET("/allSec", sections.SectionGetAll)
 		sectionGroup.GET("/byNameSec", sections.SectionGetByName)
 		sectionGroup.PATCH("/updateSec/:idSU", sections.SectionUpdate)
 		sectionGroup.DELETE("/deleteSec/:idD", sections.SectionDelete)
