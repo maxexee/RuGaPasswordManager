@@ -11,7 +11,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-func RequireAuth(c *gin.Context) {
+func UserAuthorization(c *gin.Context) {
 	fmt.Println("=== I am middleware Requiering Authorization ===")
 
 	authHeader := c.GetHeader("Authorization")
