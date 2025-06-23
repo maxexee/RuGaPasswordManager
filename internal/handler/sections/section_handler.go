@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/maxexee/rugaPasswordManager/internal/dto"
+	"github.com/maxexee/rugaPasswordManager/internal/handler/utils"
 	validations "github.com/maxexee/rugaPasswordManager/internal/handler/validations"
 	sectionsusecase "github.com/maxexee/rugaPasswordManager/internal/use_case/sections_use_case"
 )
@@ -14,26 +15,8 @@ var SectionBodyDto dto.SectionDto
 
 // VERDE...
 func SectionGetAll(c *gin.Context) {
-	// OBTENCION DEL ID DEL USUARIO.
-	// SE RECUPERA EL "user_id" DEL CONTEXTO, ES DECIR, DE LOS CLAIMS DEL TOKEN DEL LOGIN.
-	userIdClaims, ok := c.Get("user_id")
+	ok, userId := utils.SaveUserIdFromClaims(c)
 	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"STATUS": "Unauthorized",
-			"ERROR":  "There is no user_id on the token...",
-		})
-		c.Abort()
-		return
-	}
-
-	// SE VERIFICA QUE SEA ENTERO/INT.
-	// SI SI ES, ENTONCES SE ALMACENA EN "userId".
-	userId, ok := userIdClaims.(int)
-	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"STATUS": "Unauthorized",
-			"ERROR":  "user_id in context is not an integer...",
-		})
 		c.Abort()
 		return
 	}
@@ -65,26 +48,8 @@ func SectionGetAll(c *gin.Context) {
 
 // VERDE...
 func SectionGetByName(c *gin.Context) {
-	// OBTENCION DEL ID DEL USUARIO.
-	// SE RECUPERA EL "user_id" DEL CONTEXTO, ES DECIR, DE LOS CLAIMS DEL TOKEN DEL LOGIN.
-	userIdClaims, ok := c.Get("user_id")
+	ok, userId := utils.SaveUserIdFromClaims(c)
 	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"STATUS": "Unauthorized",
-			"ERROR":  "There is no user_id on the token...",
-		})
-		c.Abort()
-		return
-	}
-
-	// SE VERIFICA QUE SEA ENTERO/INT.
-	// SI SI ES, ENTONCES SE ALMACENA EN "userId".
-	userId, ok := userIdClaims.(int)
-	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"STATUS": "Unauthorized",
-			"ERROR":  "user_id in context is not an integer...",
-		})
 		c.Abort()
 		return
 	}
@@ -162,26 +127,8 @@ func SectionPost(c *gin.Context) {
 
 // VERDE...
 func SectionUpdate(c *gin.Context) {
-	// OBTENCION DEL ID DEL USUARIO.
-	// SE RECUPERA EL "user_id" DEL CONTEXTO, ES DECIR, DE LOS CLAIMS DEL TOKEN DEL LOGIN.
-	userIdClaims, ok := c.Get("user_id")
+	ok, userId := utils.SaveUserIdFromClaims(c)
 	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"STATUS": "Unauthorized",
-			"ERROR":  "There is no user_id on the token...",
-		})
-		c.Abort()
-		return
-	}
-
-	// SE VERIFICA QUE SEA ENTERO/INT.
-	// SI SI ES, ENTONCES SE ALMACENA EN "userId".
-	userId, ok := userIdClaims.(int)
-	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"STATUS": "Unauthorized",
-			"ERROR":  "user_id in context is not an integer...",
-		})
 		c.Abort()
 		return
 	}
@@ -215,29 +162,12 @@ func SectionUpdate(c *gin.Context) {
 
 // VERDE...
 func SectionDelete(c *gin.Context) {
-	// OBTENCION DEL ID DEL USUARIO.
-	// SE RECUPERA EL "user_id" DEL CONTEXTO, ES DECIR, DE LOS CLAIMS DEL TOKEN DEL LOGIN.
-	userIdClaims, ok := c.Get("user_id")
+	ok, userId := utils.SaveUserIdFromClaims(c)
 	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"STATUS": "Unauthorized",
-			"ERROR":  "There is no user_id on the token...",
-		})
 		c.Abort()
 		return
 	}
 
-	// SE VERIFICA QUE SEA ENTERO/INT.
-	// SI SI ES, ENTONCES SE ALMACENA EN "userId".
-	userId, ok := userIdClaims.(int)
-	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"STATUS": "Unauthorized",
-			"ERROR":  "user_id in context is not an integer...",
-		})
-		c.Abort()
-		return
-	}
 	// OBTENCION DEL ID DE LA SECCION DESDE EL URL.
 	sectionIdStr := c.Param("idD")
 
