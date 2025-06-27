@@ -9,20 +9,13 @@ import (
 )
 
 // VERDE...
-func PasswordGetByIdUseCase(userIdStr string, passwordIdStr string) (bool, *dto.PasswordDto, error) {
-	// CONVERSION DE STRING A INT PARA EL ID DEL USUARIO.
-	userId, userIdError := strconv.Atoi(userIdStr)
-
+func PasswordGetByIdUseCase(userId int, passwordIdStr string) (bool, *dto.PasswordDto, error) {
 	// CONVERSION DE STRING A INT PARA EL ID DE LA CONTRASEÑA.
 	passwordId, passwordIdError := strconv.Atoi(passwordIdStr)
 
 	// ===========================================================================================
 	// ===========================================================================================
 	// =========================================== VALIDACIONES ==================================
-	if userIdError != nil {
-		return false, nil, userIdError
-	}
-
 	if passwordIdError != nil {
 		return false, nil, passwordIdError
 	}
@@ -46,18 +39,8 @@ func PasswordGetByIdUseCase(userIdStr string, passwordIdStr string) (bool, *dto.
 	return true, passwordReturn, nil
 }
 
-// ...
-func PasswordGetByNameUseCase(userIdStr string, passwordNameStr string) (bool, *dto.PasswordDto, error) {
-	// CONVERSION DE STRING A INT PARA EL ID DEL USUARIO.
-	userId, userIdError := strconv.Atoi(userIdStr)
-
-	// ===========================================================================================
-	// ===========================================================================================
-	// =========================================== VALIDACIONES ==================================
-	if userIdError != nil {
-		return false, nil, userIdError
-	}
-
+// VERDE...
+func PasswordGetByNameUseCase(userId int, passwordNameStr string) (bool, *dto.PasswordDto, error) {
 	// ===========================================================================================
 	// ===========================================================================================
 	// =========================================== QUERY =========================================
@@ -78,26 +61,16 @@ func PasswordGetByNameUseCase(userIdStr string, passwordNameStr string) (bool, *
 }
 
 // VERDE...
-func PasswordPostUseCase(userIdStr string, password *dto.PasswordDto) (bool, *dto.PasswordDto, error) {
-	// CONVERSION DEL *userIdStr* A INT.
-	userId, userIdError := strconv.Atoi(userIdStr)
-
-	// ===========================================================================================
-	// ===========================================================================================
-	// =========================================== VALIDACIONES ==================================
-	if userIdError != nil {
-		return false, nil, userIdError
-	}
-
+func PasswordPostUseCase(userId int, password *dto.PasswordDto) (bool, *dto.PasswordDto, error) {
 	// ===========================================================================================
 	// ===========================================================================================
 	// =========================================== QUERY =========================================
 	// CREACION DEL DTO DE ENVIO CON EL ID DEL USUARIO Y DE LA CONTRASEÑA.
 	dtoSend := dto.PasswordDto{
-		UserID:                  uint(userId),
 		Name:                    strings.ToUpper(strings.ReplaceAll(password.Name, " ", "-")),
 		Description:             password.Description,
 		Password:                password.Password,
+		UserID:                  uint(userId),
 		SectionParentIdPassword: password.SectionParentIdPassword,
 	}
 
@@ -112,19 +85,13 @@ func PasswordPostUseCase(userIdStr string, password *dto.PasswordDto) (bool, *dt
 }
 
 // VERDE...
-func PasswordUpdateUseCase(userIdStr string, passwordIdStr string, password *dto.PasswordDto) (bool, *dto.PasswordDto, error) {
-	// CONVERSION DEL *userIdStr* A INT.
-	userId, userIdError := strconv.Atoi(userIdStr)
-
+func PasswordUpdateUseCase(userId int, passwordIdStr string, password *dto.PasswordDto) (bool, *dto.PasswordDto, error) {
 	// CONVERSION DEL *passwordIdStr* A INT.
 	passwordId, passwordIdError := strconv.Atoi(passwordIdStr)
+
 	// ===========================================================================================
 	// ===========================================================================================
 	// =========================================== VALIDACIONES ==================================
-	if userIdError != nil {
-		return false, nil, userIdError
-	}
-
 	if passwordIdError != nil {
 		return false, nil, passwordIdError
 	}
@@ -153,19 +120,13 @@ func PasswordUpdateUseCase(userIdStr string, passwordIdStr string, password *dto
 }
 
 // VERDE...
-func PasswordDeleteUseCase(userIdStr string, passwordIdStr string) (bool, error) {
-	// CONVERSION DEL *userIdStr* A INT.
-	userId, userIdError := strconv.Atoi(userIdStr)
-
+func PasswordDeleteUseCase(userId int, passwordIdStr string) (bool, error) {
 	// CONVERSION DEL *passwordIdStr* A INT.
 	passwordId, passwordIdError := strconv.Atoi(passwordIdStr)
+
 	// ===========================================================================================
 	// ===========================================================================================
 	// =========================================== VALIDACIONES ==================================
-	if userIdError != nil {
-		return false, userIdError
-	}
-
 	if passwordIdError != nil {
 		return false, passwordIdError
 	}

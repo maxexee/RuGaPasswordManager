@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/maxexee/rugaPasswordManager/internal/dto"
+	"github.com/maxexee/rugaPasswordManager/internal/handler/utils"
 	validations "github.com/maxexee/rugaPasswordManager/internal/handler/validations"
 	passwordusecase "github.com/maxexee/rugaPasswordManager/internal/use_case/password_use_case"
 )
@@ -15,14 +16,17 @@ var PasswordBodyDto dto.PasswordDto
 
 // VERDE...
 func PasswordGetById(c *gin.Context) {
-	// OBTENCION DEL ID DEL USUARIO DESDE EL URL.
-	userIdStr := c.Param("id")
+	ok, userId := utils.SaveUserIdFromClaims(c)
+	if !ok {
+		c.Abort()
+		return
+	}
 
 	// OBTENCION DEL ID DE LA CONTRASEÑA DESDE EL URL.
 	passwordIdStr := c.Param("idPG")
 
 	// LLAMDA AL USE CASE.
-	ok, passwordReturn, passwordReturnError := passwordusecase.PasswordGetByIdUseCase(userIdStr, passwordIdStr)
+	ok, passwordReturn, passwordReturnError := passwordusecase.PasswordGetByIdUseCase(userId, passwordIdStr)
 	if !ok {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"STATUS": "ERROR...",
@@ -39,16 +43,19 @@ func PasswordGetById(c *gin.Context) {
 	})
 }
 
-// ...
+// VERDE...
 func PasswordGetByName(c *gin.Context) {
-	// OBTENCION DEL ID DEL USUARIO DESDE EL URL.
-	userIdStr := c.Param("id")
+	ok, userId := utils.SaveUserIdFromClaims(c)
+	if !ok {
+		c.Abort()
+		return
+	}
 
 	// OBTENCION DEL NOMBRE DE LA CONTRASEÑA DESDE EL URL.
 	passwordName := strings.ToUpper(c.Query("namePass"))
 
 	// LLAMADA AL USE CASE.
-	ok, passwordReturn, passwordReturnError := passwordusecase.PasswordGetByNameUseCase(userIdStr, passwordName)
+	ok, passwordReturn, passwordReturnError := passwordusecase.PasswordGetByNameUseCase(userId, passwordName)
 	if !ok {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"STATUS": "ERROR",
@@ -67,8 +74,11 @@ func PasswordGetByName(c *gin.Context) {
 
 // VERDE...
 func PasswordPost(c *gin.Context) {
-	// OBTENCION DEL ID DEL USUARIO DESDE EL URL.
-	userIdStr := c.Param("id")
+	ok, userId := utils.SaveUserIdFromClaims(c)
+	if !ok {
+		c.Abort()
+		return
+	}
 
 	// VALIDACION DE LOS DATOS DE BODY.
 	if !validations.BodyValidation(c, &PasswordBodyDto) {
@@ -77,7 +87,7 @@ func PasswordPost(c *gin.Context) {
 	}
 
 	// LLAMADO AL USE CASE.
-	ok, passwordReturn, passwordReturnError := passwordusecase.PasswordPostUseCase(userIdStr, &PasswordBodyDto)
+	ok, passwordReturn, passwordReturnError := passwordusecase.PasswordPostUseCase(userId, &PasswordBodyDto)
 	if !ok {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"STATUS": "ERROR...",
@@ -96,8 +106,11 @@ func PasswordPost(c *gin.Context) {
 
 // VERDE...
 func PasswordUpdate(c *gin.Context) {
-	// OBTENCION DEL ID DEL USUARIO DESDE EL URL.
-	userIdStr := c.Param("id")
+	ok, userId := utils.SaveUserIdFromClaims(c)
+	if !ok {
+		c.Abort()
+		return
+	}
 
 	// OBTENCION DEL ID DE LA CONTRASEÑA DESDE EL URL.
 	passwordIdStr := c.Param("idPU")
@@ -109,7 +122,7 @@ func PasswordUpdate(c *gin.Context) {
 	}
 
 	// LLAMADO AL USE CASE.
-	ok, passwordReturn, passwordReturnError := passwordusecase.PasswordUpdateUseCase(userIdStr, passwordIdStr, &PasswordBodyDto)
+	ok, passwordReturn, passwordReturnError := passwordusecase.PasswordUpdateUseCase(userId, passwordIdStr, &PasswordBodyDto)
 	if !ok {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"STATUS": "ERROR...",
@@ -128,14 +141,17 @@ func PasswordUpdate(c *gin.Context) {
 
 // VERDE...
 func PasswordDelete(c *gin.Context) {
-	// OBTENCION DEL ID DEL USUARIO DESDE EL URL.
-	userIdStr := c.Param("id")
+	ok, userId := utils.SaveUserIdFromClaims(c)
+	if !ok {
+		c.Abort()
+		return
+	}
 
 	// OBTENCION DEL ID DE LA CONTRASEÑA DESDE EL URL.
 	passwordIdStr := c.Param("idPD")
 
 	// LLAMDO AL USE CASE.
-	ok, passwordDeleteError := passwordusecase.PasswordDeleteUseCase(userIdStr, passwordIdStr)
+	ok, passwordDeleteError := passwordusecase.PasswordDeleteUseCase(userId, passwordIdStr)
 	if !ok {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"STATUS": "ERROR...",

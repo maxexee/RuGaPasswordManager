@@ -1,6 +1,7 @@
 package passwordsrepository
 
 import (
+	"errors"
 	"strings"
 
 	postgres "github.com/maxexee/rugaPasswordManager/infrastructure/db"
@@ -29,9 +30,13 @@ func PasswordGetByIdUseCase(password *dto.PasswordDto) (bool, *dto.PasswordDto, 
 	// ===========================================================================================
 	// =========================================== QUERY =========================================
 	// BUSQUEDA Y OTENCION DE LA CONTRASEÑA EN LA BASE DE DATOS MEDIANTE EL NOMBRE.
-	passwordExistResult := postgres.DB.First(&passwordExist, password.ID)
+	passwordExistResult := postgres.DB.First(&passwordExist, "user_id	=	?	AND 	id	=	?", password.UserID, password.ID)
 	if passwordExistResult.Error != nil {
 		return false, nil, passwordExistResult.Error
+	}
+
+	if passwordExistResult.RowsAffected == 0 {
+		return false, nil, errors.New("password not found")
 	}
 
 	// CONSTRUCCION DEL DTO DE RETORNO.
@@ -69,7 +74,7 @@ func PasswordGetByNameRepository(password *dto.PasswordDto) (bool, *dto.Password
 	// ===========================================================================================
 	// =========================================== QUERY =========================================
 	// BUSQUEDA Y OTENCION DE LA CONTRASEÑA EN LA BASE DE DATOS MEDIANTE EL NOMBRE.
-	passwordExistResult := postgres.DB.Where("name	=	?", password.Name).First(&passwordExist)
+	passwordExistResult := postgres.DB.Where("user_id	=	?	AND	name	=	?", password.UserID, password.Name).First(&passwordExist)
 	if passwordExistResult.Error != nil {
 		return false, nil, passwordExistResult.Error
 	}
@@ -110,7 +115,7 @@ func PasswordPostRepository(password *dto.PasswordDto) (bool, *dto.PasswordDto, 
 	}
 
 	// VALIDAMOS QUE LA SECCION PADRE EXISTA (NO SE ACEPTAN CONSTRASEÑAS EN LA SECCION RAIZ (O NULL)).
-	sectionExistResult := postgres.DB.Where("id	=	?", password.SectionParentIdPassword).Select("id").First(&sectionExist)
+	sectionExistResult := postgres.DB.Where("user_id	=	?	AND	id	=	?", password.UserID, password.SectionParentIdPassword).Select("id").First(&sectionExist)
 	if sectionExist.ID == 0 || sectionExistResult.Error != nil {
 		return false, nil, sectionExistResult.Error
 	}
@@ -120,11 +125,11 @@ func PasswordPostRepository(password *dto.PasswordDto) (bool, *dto.PasswordDto, 
 	// =========================================== QUERY =========================================
 	// CONSTRUCCION DE LA NUEVA CONTRASEÑA.
 	passwordCreate := domain.Password{
-		UserID:                  password.UserID,
-		SectionParentIdPassword: password.SectionParentIdPassword,
 		Name:                    password.Name,
 		Description:             password.Description,
 		Password:                password.Password,
+		UserID:                  password.UserID,
+		SectionParentIdPassword: password.SectionParentIdPassword,
 	}
 
 	// GUARDADO DE LA CONTRASEÑA EN LA BASE DE DATOS.
@@ -133,15 +138,19 @@ func PasswordPostRepository(password *dto.PasswordDto) (bool, *dto.PasswordDto, 
 		return false, nil, passwordCreation.Error
 	}
 
+	if passwordCreation.RowsAffected == 0 {
+		return false, nil, errors.New("password creation failed")
+	}
+
 	// CONSTRUCCION DEL DTO DE RETONO.
 	dtoReturn := dto.PasswordDto{
-		ID:                      password.ID,
-		UserID:                  password.UserID,
-		CreatedAt:               password.CreatedAt,
-		SectionParentIdPassword: password.SectionParentIdPassword,
-		Name:                    password.Name,
-		Description:             password.Description,
-		Password:                password.Password,
+		ID:                      passwordCreate.ID,
+		UserID:                  passwordCreate.UserID,
+		CreatedAt:               passwordCreate.CreatedAt,
+		SectionParentIdPassword: passwordCreate.SectionParentIdPassword,
+		Name:                    passwordCreate.Name,
+		Description:             passwordCreate.Description,
+		Password:                passwordCreate.Password,
 	}
 
 	// SI TODO SALE BIEN...
@@ -166,7 +175,7 @@ func PasswordUpdateRepositoy(password *dto.PasswordDto) (bool, *dto.PasswordDto,
 	}
 
 	// VALIDAMOS QUE EL ID DEL LA CONTRASEÑA EXISTA.
-	passwordExistResult := postgres.DB.First(&passwordExist, "id	=	?", password.ID)
+	passwordExistResult := postgres.DB.First(&passwordExist, "user_id	=	?	AND	id	=	?", password.UserID, password.ID)
 	if passwordExistResult.Error != nil {
 		return false, nil, passwordExistResult.Error
 	}
@@ -175,7 +184,7 @@ func PasswordUpdateRepositoy(password *dto.PasswordDto) (bool, *dto.PasswordDto,
 	// ===========================================================================================
 	// =========================================== QUERY =========================================
 	// CONSTRUCCION Y GUARDADO DE LA CONSTRASEÑA A ACTUALIZAR.
-	passwordUpdateResult := postgres.DB.Model(&passwordExist).Where("id	=	?", password.ID).Updates(map[string]interface{}{
+	passwordUpdateResult := postgres.DB.Model(&passwordExist).Where("user_id	=	?	AND	id	=	?", password.UserID, password.ID).Updates(map[string]interface{}{
 		"Name":                    strings.ToUpper(password.Name),
 		"Description":             &password.Description,
 		"Password":                password.Password,
@@ -223,7 +232,7 @@ func PasswordDeleteRepository(password *dto.PasswordDto) (bool, error) {
 	}
 
 	// VALIDAMOS QUE EL ID DEL LA SECCION EXISTA.
-	passwordExistResult := postgres.DB.First(&passwordExist, "id	=	?", password.ID)
+	passwordExistResult := postgres.DB.First(&passwordExist, "user_id	=	?	AND	id	=	?", password.UserID, password.ID)
 	if passwordExistResult.Error != nil {
 		return false, passwordExistResult.Error
 	}
@@ -232,7 +241,7 @@ func PasswordDeleteRepository(password *dto.PasswordDto) (bool, error) {
 	// ===========================================================================================
 	// =========================================== QUERY =========================================
 	// ELIMINAMOS EL REGISTRO DE LA BASE DE DATOS.
-	passwordDeleteResult := postgres.DB.Unscoped().Delete(&passwordExist, password.ID)
+	passwordDeleteResult := postgres.DB.Unscoped().Delete(&passwordExist, "user_id	=	?	AND	id	=	?", password.UserID, password.ID)
 	if passwordDeleteResult.Error != nil {
 		return false, passwordDeleteResult.Error
 	}
