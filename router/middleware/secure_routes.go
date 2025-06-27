@@ -16,7 +16,7 @@ func SecureRoutesMiddleware(e *gin.Engine) {
 	protected := e.Group(("/"))
 	protected.Use(authorization.UserAuthorization)
 
-	// RUTAS DE SECCIONES (ASEGURARLAS DESPUES AL "SecureRoutesMiddleware").
+	// RUTAS DE SECCIONES.
 	sectionGroup := protected.Group("/section")
 	{
 		sectionGroup.POST("/createSec", sections.SectionPost)
@@ -26,14 +26,14 @@ func SecureRoutesMiddleware(e *gin.Engine) {
 		sectionGroup.DELETE("/deleteSec/:idD", sections.SectionDelete)
 	}
 
-	//1 RUTAS DE LAS CONTRASEÑAS (ASEGURARLAS DESPUES AL "SecureRoutesMiddleware").
-	passwordGroup := protected.Group("/user/:id")
+	//1 RUTAS DE LAS CONTRASEÑAS.
+	passwordGroup := protected.Group("/passwd")
 	{
-		passwordGroup.POST("/section/passwd", passwords.PasswordPost)
-		passwordGroup.GET("/passwd/byId/:idPG", passwords.PasswordGetById)
-		passwordGroup.GET("/passwd/byNamePass", passwords.PasswordGetByName)
-		passwordGroup.PATCH("/passwd/updatePass/:idPU", passwords.PasswordUpdate)
-		passwordGroup.DELETE("/passwd/delPass/:idPD", passwords.PasswordDelete)
+		passwordGroup.POST("/createPass", passwords.PasswordPost)
+		passwordGroup.GET("/byIdPass/:idPG", passwords.PasswordGetById)
+		passwordGroup.GET("/byNamePass", passwords.PasswordGetByName)
+		passwordGroup.PATCH("/updatePass/:idPU", passwords.PasswordUpdate)
+		passwordGroup.DELETE("/delPass/:idPD", passwords.PasswordDelete)
 	}
 
 	protected.GET("/validate", func(c *gin.Context) {
