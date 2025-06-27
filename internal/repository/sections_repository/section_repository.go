@@ -1,11 +1,14 @@
 package sectionsrepository
 
 import (
+	"errors"
+	"fmt"
 	"strings"
 
 	postgres "github.com/maxexee/rugaPasswordManager/infrastructure/db"
 	"github.com/maxexee/rugaPasswordManager/internal/domain"
 	"github.com/maxexee/rugaPasswordManager/internal/dto"
+	"gorm.io/gorm"
 )
 
 // VERDE...
@@ -47,7 +50,7 @@ func SectionGetAllRepository(section *dto.SectionDto) (bool, *dto.SectionPasswor
 		// OBTENCION DE LAS SECCIONES HIJAS DE UNA SECCION PADRE.
 		sectionsGetAllResult := postgres.DB.Where("user_id	=	?	AND	section_parent_id	=	?", section.UserID, section.SectionParentId).Find(&sectionsExist)
 		if sectionsGetAllResult.Error != nil {
-			return false, nil, sectionExistResult.Error
+			return false, nil, sectionsGetAllResult.Error
 		}
 
 		// OBTENCION DE LAS CONSTRASEÑAS HIJAS DE UNA SECCION PADRE.
@@ -55,11 +58,16 @@ func SectionGetAllRepository(section *dto.SectionDto) (bool, *dto.SectionPasswor
 		if posswordGetResult.Error != nil {
 			return false, nil, posswordGetResult.Error
 		}
+
+		// SI NINGUNA SECCION "Y" CONTRASEÑA FUERON ENCONTRADAS, RETORNA UN ERROR.
+		if sectionsGetAllResult.RowsAffected == 0 && posswordGetResult.RowsAffected == 0 {
+			fmt.Println("ERROR NOT FOUND...")
+			return false, nil, gorm.ErrRecordNotFound
+		}
 	}
 
 	// CONSTRUCCION DEL DTO PARA EL REGRESO DE LAS SECCIONES.
 	sectionsDTOsReturn := make([]dto.SectionDto, len(sectionsExist))
-
 	for i, section := range sectionsExist {
 		sectionsDTOsReturn[i] = dto.SectionDto{
 			SectionParentId: section.SectionParentId,
@@ -117,7 +125,7 @@ func SectionGetByNameRepository(section *dto.SectionDto) (bool, *dto.SectionDto,
 	// ===========================================================================================
 	// =========================================== QUERY =========================================
 	// BUSQUEDA Y OTENCION DE LA SECCION EN LA BASE DE DATOS MEDIANTE EL NOMBRE.
-	sectionGetResult := postgres.DB.Where("name	=	?", section.Name).First(&sectionExist)
+	sectionGetResult := postgres.DB.Where("user_id	=	?	AND name	=	?", section.UserID, section.Name).First(&sectionExist)
 	if sectionGetResult.Error != nil {
 		return false, nil, sectionGetResult.Error
 	}
@@ -156,7 +164,7 @@ func SectionPostRepository(section *dto.SectionDto) (bool, *dto.SectionDto, erro
 
 	// VALIDAMOS QUE EL *SectionParentId* EXISTA, SI NO, QUE EL  *SectionParentId* SEA NULL.
 	if section.SectionParentId != nil {
-		parentSectionExistResult := postgres.DB.First(&parentSectionExist, "id	=	?", section.SectionParentId)
+		parentSectionExistResult := postgres.DB.First(&parentSectionExist, "user_id	=	?	AND id	=	?", section.UserID, section.SectionParentId)
 		if parentSectionExist.ID == 0 || parentSectionExistResult.Error != nil {
 			return false, nil, parentSectionExistResult.Error
 		}
@@ -179,6 +187,10 @@ func SectionPostRepository(section *dto.SectionDto) (bool, *dto.SectionDto, erro
 		return false, nil, sectionCreateResult.Error
 	}
 
+	if sectionCreateResult.RowsAffected == 0 {
+		return false, nil, errors.New("error al guardar en la base de datos")
+	}
+
 	// CONSTRUCCION DEL DTO DE RETORNO.
 	dtoReturn := dto.SectionDto{
 		ID:              sectionCreate.ID,
@@ -198,8 +210,11 @@ func SectionUpdateRepository(section *dto.SectionDto) (bool, *dto.SectionDto, er
 	// OBJETO DE USUARIO.
 	var userExist domain.User
 
-	// OBJETO DE SECCION.
+	// OBJETOS DE TIPO *domain.Section*.
 	var sectionExist domain.Section
+
+	// OBJETO DE TIPO *domain.Section*.
+	var parentSectionExist domain.Section
 
 	// ===========================================================================================
 	// ===========================================================================================
@@ -210,8 +225,16 @@ func SectionUpdateRepository(section *dto.SectionDto) (bool, *dto.SectionDto, er
 		return false, nil, userExistResutlt.Error
 	}
 
+	// VALIDAMOS QUE EL *SectionParentId* EXISTA, SI NO, QUE EL  *SectionParentId* SEA NULL.
+	if section.SectionParentId != nil {
+		parentSectionExistResult := postgres.DB.First(&parentSectionExist, " user_id	=	?	AND	id	=	?", section.UserID, section.SectionParentId)
+		if parentSectionExist.ID == 0 || parentSectionExistResult.Error != nil {
+			return false, nil, parentSectionExistResult.Error
+		}
+	}
+
 	// VALIDAMOS QUE LA SECCION EXISTA.
-	sectionExistResult := postgres.DB.First(&sectionExist, "id	=	?", section.ID)
+	sectionExistResult := postgres.DB.First(&sectionExist, "user_id	=	?	AND	id	=	?", section.UserID, section.ID)
 	if sectionExistResult.Error != nil {
 		return false, nil, sectionExistResult.Error
 	}
@@ -220,7 +243,7 @@ func SectionUpdateRepository(section *dto.SectionDto) (bool, *dto.SectionDto, er
 	// ===========================================================================================
 	// =========================================== QUERY =========================================
 	// MODIFICACION DE LA SECCION.
-	sectionUpdateResult := postgres.DB.Model(&sectionExist).Where("id	=	?", section.ID).Updates(map[string]interface{}{
+	sectionUpdateResult := postgres.DB.Model(&sectionExist).Where("user_id	=	?	AND	id	=	?", section.UserID, section.ID).Updates(map[string]interface{}{
 		"Name":            strings.ToUpper(section.Name),
 		"Description":     section.Description,
 		"SectionParentId": section.SectionParentId,
@@ -228,6 +251,10 @@ func SectionUpdateRepository(section *dto.SectionDto) (bool, *dto.SectionDto, er
 
 	if sectionUpdateResult.Error != nil {
 		return false, nil, sectionUpdateResult.Error
+	}
+
+	if sectionUpdateResult.RowsAffected == 0 {
+		return false, nil, errors.New("update section error")
 	}
 
 	// CONSTRUCCION DEL DTO DE RETORNO.
@@ -263,8 +290,9 @@ func SectionDeleteRepository(section *dto.SectionDto) (bool, error) {
 	}
 
 	// VALIDAMOS QUE LA SECCION EXISTA.
-	sectionExistResult := postgres.DB.First(&sectionExist, section.ID)
+	sectionExistResult := postgres.DB.First(&sectionExist, "user_id	=	?	AND	id	=	?", section.UserID, section.ID)
 	if sectionExistResult.Error != nil {
+		fmt.Println("1...")
 		return false, sectionExistResult.Error
 	}
 
@@ -272,7 +300,7 @@ func SectionDeleteRepository(section *dto.SectionDto) (bool, error) {
 	// ===========================================================================================
 	// =========================================== QUERY =========================================
 	//ELIMINACION DE LA SECCION EN LA BASE DE DATO.
-	sectionDeleteResult := postgres.DB.Unscoped().Delete(&sectionExist, section.ID)
+	sectionDeleteResult := postgres.DB.Unscoped().Delete(&sectionExist, "user_id	=	?	AND	id	=	?", section.UserID, section.ID)
 	if sectionDeleteResult.Error != nil {
 		return false, sectionDeleteResult.Error
 	}
