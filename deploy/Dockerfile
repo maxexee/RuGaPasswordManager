@@ -1,7 +1,7 @@
 # ===================== FUNCIONAL - DESARROLLO =====================
 
 # ---------- Etapa de build ----------
-FROM golang:1.24.3-alpine3.21 AS builder
+FROM golang:1.24.3-alpine3.21.3 AS builder
 
 WORKDIR /app
 COPY .  .
@@ -11,7 +11,7 @@ COPY .air.toml ./
 RUN go install github.com/air-verse/air@latest
 
 # ---------- Etapa final ----------
-FROM golang:1.24.3-alpine3.21
+FROM golang:1.24.3-alpine3.21.3
 
 WORKDIR /app
 
