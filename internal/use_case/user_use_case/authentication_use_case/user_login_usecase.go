@@ -32,7 +32,7 @@ func LogInUseCase(user *dto.LogInDTO) (bool, string, error) {
 	*/
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"sub": userExist.ID,
-		"exp": time.Now().Add(time.Hour * 8).Unix(),
+		"exp": time.Now().Add(time.Minute * 10).Unix(),
 	})
 
 	// UNA VEZ CREADO EL OBJETO JWT, SE FIRMA CON NUESTRA CLAVE SECRETA, ESTO RETORNA EL TOKEN EN
